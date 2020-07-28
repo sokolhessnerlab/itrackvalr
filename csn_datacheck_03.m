@@ -1,7 +1,7 @@
 % CSN Data Check & Basic Analysis
 
 % Set up datapath
-datapath = '/Users/sokolhessner/Documents/Dropbox/Academics/Research/CSN-CONTINUOUS_SC_NOREPS/databackups/Data-2017_10/';
+datapath = '~/Projects/shlab/mounts/csn/data';
 cd(datapath);
 
 % Identify subject IDs manually (incl. accounting for missing data)
