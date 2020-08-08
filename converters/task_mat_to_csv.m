@@ -1,11 +1,19 @@
 % CSN Convert Completed Participants' MAT to CSV
 
-% Set up path to raw behavioral MAT files
+% Set root data path
 datapath = '/Users/metis/Projects/shlab/mounts/csn/data';
+
+% Set path to raw behavioral MAT files
 raw_behavioral_responses_path = fullfile(datapath, ...
                                          'raw', ...
                                          'behavioral', ...
                                          'responses');
+
+% Set path to incomplete participants list
+incomplete_path = fullfile(datapath, ...
+                           'raw', ...
+                           'incomplete', ...
+                           'participants.txt');
 
 % Set output path for converted CSV files
 output_path = fullfile(datapath, ...
@@ -18,15 +26,8 @@ dir_list = dir(raw_behavioral_responses_path);
 dir_contents = {dir_list.name};
 filenames = dir_contents(startsWith(dir_contents, 'csntask_subjCSN'));
 
-% Note incompletes (and non-participant)
-incompletes = {'CSN003'
-               'CSN013'
-               'CSN014'
-               'CSN024'
-               'CSN028'
-               'CSN031'
-               'CSN046'
-               'CSN999'};
+% Import incompletes (and non-participant 999)
+incompletes = importdata(incomplete_path);
 
 % Navigate into data directory
 cd(raw_behavioral_responses_path)
