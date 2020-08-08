@@ -1,11 +1,20 @@
 % CSN Convert Completed Participants' MAT to CSV
 
-% Set up datapath
+% Set up path to raw behavioral MAT files
 datapath = '/Users/metis/Projects/shlab/mounts/csn/data';
+raw_behavioral_responses_path = fullfile(datapath, ...
+                                         'raw', ...
+                                         'behavioral', ...
+                                         'responses');
+
+% Set output path for converted CSV files
+output_path = fullfile(datapath, ...
+                       'raw_csv', ...
+                       'behavioral');
 
 % List data directory contents and extract files starting with
 % 'csntask_subjCSN', which signify behavioral task responses
-dir_list = dir(datapath);
+dir_list = dir(raw_behavioral_responses_path);
 dir_contents = {dir_list.name};
 filenames = dir_contents(startsWith(dir_contents, 'csntask_subjCSN'));
 
@@ -20,7 +29,7 @@ incompletes = {'CSN003'
                'CSN999'};
 
 % Navigate into data directory
-cd(datapath)
+cd(raw_behavioral_responses_path)
 
 % Convert each complete participant behavioral task response
 % from .mat to .csv
@@ -52,7 +61,8 @@ for i = 1:length(filenames)
     
     participant_fn = participant_id + '.csv';
     
-    writetable(participant_table, 'csv/' + participant_fn, ...
+
+    writetable(participant_table, fullfile(output_path ,participant_fn), ...
                'Delimiter', ',', 'QuoteStrings', true);
     
 end
