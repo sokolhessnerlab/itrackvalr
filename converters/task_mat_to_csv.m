@@ -36,35 +36,34 @@ cd(raw_behavioral_responses_path)
 % from .mat to .csv
 for i = 1:length(filenames)
 
-    fn = filenames{i};
-    participant_id = string(regexp(fn, 'CSN\d{3}', 'match'));
-    
-    % Skip to next participant if current is incomplete
-    if ismember(participant_id, incompletes)
-        continue
-    end
-    
-    load(fn);
-    
-    N_TRIALS = subjdata.nTrials;
-    BASE_BOOL = true(N_TRIALS, 1);
-    BASE_ONES = ones(N_TRIALS, 1);
-    
-    trial = transpose(1:N_TRIALS);
-    clock_side = BASE_BOOL * subjdata.lr;
-    p_signal = BASE_ONES * subjdata.pSignal;
-    resp = subjdata.resps;
-    step = subjdata.steps;
-    img_index = subjdata.img_ind;
+  fn = filenames{i};
+  participant_id = string(regexp(fn, 'CSN\d{3}', 'match'));
+  
+  % Skip to next participant if current is incomplete
+  if ismember(participant_id, incompletes)
+    continue
+  end
+  
+  bd = load(fn).subjdata;
+  
+  N_TRIALS = bd.nTrials;
+  BASE_BOOL = true(N_TRIALS, 1);
+  BASE_ONES = ones(N_TRIALS, 1);
+  
+  trial = transpose(1:N_TRIALS);
+  clock_side = BASE_BOOL * bd.lr;
+  p_signal = BASE_ONES * bd.pSignal;
+  resp = bd.resps;
+  step = bd.steps;
+  img_index = bd.img_ind;
 
-    participant_table = table(trial, clock_side, p_signal, resp, ...
-                        step, img_index);
-    
-    participant_fn = participant_id + '.csv';
-    
+  participant_table = table(trial, clock_side, p_signal, resp, ...
+                      step, img_index);
+  
+  participant_fn = participant_id + '.csv';
 
-    writetable(participant_table, fullfile(output_path ,participant_fn), ...
-               'Delimiter', ',', 'QuoteStrings', true);
-    
+  writetable(participant_table, fullfile(output_path, participant_fn), ...
+             'Delimiter', ',', 'QuoteStrings', true);
+  
 end
 
