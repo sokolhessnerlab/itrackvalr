@@ -32,7 +32,7 @@ incompletes = importdata(incomplete_path);
 % Navigate into data directory
 cd(raw_eyetracker_responses_path)
 
-for i = 1:length(filenames)
+for i = 1:length(filenames) 
 
   fn = filenames{i};
   participant_id = string(regexp(fn, 'CSN\d{3}', 'match'));
@@ -63,15 +63,25 @@ for i = 1:length(filenames)
     mkdir(output_path, participant_id);
   end
   
-  % FSAMPLE struct to fsample.csv
+  % FSAMPLE struct to fsample.csv with specified fields
+  
+  % time (milliseconds)
   time = transpose(etd.FSAMPLE.time);
+  
+  % gaze position horizontal (pixels)
   gx = transpose(etd.FSAMPLE.gx);
-  gx = gx(:,2);
-  writetable(table(time, gx), ...
+  gx = gx(:,2); % right eye only
+  
+  % gaze position vertical (pixels)
+  gy = transpose(etd.FSAMPLE.gy);
+  gy = gy(:,2); % right eye only
+  
+  fsample_table = table(time, gx, gy);
+  writetable(fsample_table, ...
              fullfile(p_output_path, 'fsample.csv'), ...
              'Delimiter', ',', 'QuoteStrings', true);
   
-  % FEVENT struct to ffevent.csv
+  % FEVENT struct to fevent.csv
   writetable(struct2table(etd.FEVENT), ...
              fullfile(p_output_path, 'fevent.csv'), ...
              'Delimiter', ',', 'QuoteStrings', true);
