@@ -1,0 +1,112 @@
+---
+title: "Preprocessing of Behavioral, Eye Tracker, and Questionnaire Data"
+author: "Ari Dyckovsky"
+output:
+  md_document:
+    variant: markdown_github
+---
+
+# Preprocessing of Behavioral, Eye Tracker, and Questionnaire Data
+
+The purpose of preprocessing all three sets of data is to load from the `extracted` data directory CSV files and prepare the datasets on a **per participant** basis. This preparation includes the typing of columns, translating values in columns, and writing data to a new CSV within the `clean` data directory. No statistical analyses are applied in this notebook.
+
+## Setup
+
+```{r, setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  strip.white = TRUE,
+  tidy = TRUE,
+  highlight = TRUE
+)
+```
+
+### Load packages
+
+```{r, package-loading, message=FALSE}
+# Data Wrangling & Processing
+library(readr)
+library(tibble)
+library(purrr)
+library(dplyr)
+library(ggplot2)
+
+# Utilities
+library(hash)
+library(tools)
+```
+
+### Set Root Data Path
+
+Set the `path_to_project` variable to **your local machine's** absolute path to the CSN path. The `datapath` is created by concatenating the relative data path to your local machine's mount of the CSN project.
+
+```{r, set-root-data-path}
+path_to_project <- "/Users/metis/Projects/shlab/mounts/csn"
+datapath <- file.path(path_to_project, "data")
+```
+
+### Set Extracted Data Path
+
+```{r, set-extracted-data-path}
+ext_datapath <- file.path(datapath, "extracted")
+```
+
+### Define Methods
+
+```{r, methods}
+load_df <- function(csv, columns_spec = readr::cols(.default = readr::col_guess)) {
+  df <- readr::read_csv(csv, col_types = columns_spec)
+  return(df)
+}
+
+create_df_hash <- function(path_list, fn_list, columns_spec) {
+  df_hash <- hash()
+  path_list %>%
+    purrr::map(load_df, columns_spec = columns_spec) %>%
+    purrr::imap(function(x, i) {
+      fn <- tools::file_path_sans_ext(fn_list[[i]])
+      df_hash[[fn]] <- x
+    })
+  return(df_hash)
+}
+```
+
+## Behavioral Data Preprocessing
+
+```{r, behavioral-data-loading}
+b_datapath <- file.path(ext_datapath, "behavioral")
+b_path_list <- list.files(b_datapath, full.names = TRUE)
+b_fn_list <- list.files(b_datapath)
+b_columns_spec <- readr::cols(
+  trial = col_integer(),
+  clock_side = col_integer(),
+  p_signal = col_double(),
+  resp_1 = col_integer(),
+  resp_2 = col_double(),
+  step_1 = col_integer(),
+  step_2 = col_double(),
+  img_index = col_integer()
+)
+
+b_df_hash <- create_df_hash(b_path_list, b_fn_list, b_columns_spec)
+```
+
+```{r, view-b-df}
+knitr::kable(
+  b_df_hash[["CSN001"]]
+)
+```
+
+## Eye Tracker Data Preprocessing
+
+```{r, eye-tracker-data-loading}
+e_datapath <- file.path(ext_datapath, "eyetracker")
+
+```
+
+## Questionnaire Data Preprocessing
+
+```{r, questionnaire-data-loading}
+q_datapath <- file.path(ext_datapath, "questionnaire")
+
+```
