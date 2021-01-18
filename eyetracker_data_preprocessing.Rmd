@@ -1,0 +1,83 @@
+---
+title: "Eyetracker Data Preprocessing"
+output: html_notebook
+---
+
+# Eyetracker Data Preprocessing
+
+```{r, setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  strip.white = TRUE,
+  tidy = TRUE,
+  highlight = TRUE
+)
+```
+
+## Load packages
+
+```{r, libraries, message=FALSE}
+library(tidyverse)
+```
+
+## File path definitions
+
+```{r}
+root_path <- "/Volumes/shlab/Projects/CSN/data/extracted/eyetracker"
+event_csv <- "fevent.csv"
+sample_csv <- "fsample.csv"
+ioevent_csv <- "ioevent.csv"
+recordings <- "recordings.csv"
+
+id_prefix <- "CSN"
+id_length <- 3
+min_id <- 1
+max_id <- 57
+```
+
+## Eyetracking Data (ETD) Loader by ID
+
+```{r}
+load_etd_by_id <- function(id, filename_csv = sample_csv) {
+  # Returns tibble of loaded csv file by integer id
+  # Filename can be one of event, sample, ioevent, recordings,
+  #   prefixed with `_csv`; default is sample.
+  padded_id <- stringr::str_pad(id, 3, pad = "0")
+  participant_id <- stringr::str_c(id_prefix, padded_id)
+  path_to_etd <- file.path(root_path, participant_id, filename_csv)
+  if (file.exists(path_to_etd)) {
+    return(readr::read_csv(path_to_etd))
+  } else {
+    return(NULL)
+  }
+}
+```
+
+# Preprocessing of CSN001
+
+## Calibration/Validation
+
+```{r}
+csn001_event <- load_etd_by_id(1, event_csv)
+
+csn001_event_cal <- csn001_event %>% dplyr::filter(stringr::str_detect(message, "!CAL"))
+csn001_event_val <- csn001_event %>% dplyr::filter(stringr::str_detect(message, "VALIDATE"))
+```
+
+```{r}
+csn001_event %>% 
+  summarize(duration = (max(sttime) - min(sttime)) / (1000*60))
+```
+
+# Preprocessing applied generally to participants
+
+```{r}
+for (i in min_id:max_id) {
+  print(i)
+}
+```
+
+
+
+
+

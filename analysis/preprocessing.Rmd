@@ -51,7 +51,7 @@ datapath <- file.path(path_to_project, "data")
 ext_datapath <- file.path(datapath, "extracted")
 ```
 
-### Define Methods
+### Define Loading Methods
 
 ```{r, methods}
 load_df <- function(csv, columns_spec = readr::cols(.default = readr::col_guess)) {
@@ -93,8 +93,23 @@ b_df_hash <- create_df_hash(b_path_list, b_fn_list, b_columns_spec)
 
 ```{r, view-b-df}
 knitr::kable(
-  b_df_hash[["CSN001"]]
+  head(b_df_hash[["CSN001"]], 20)
 )
+```
+
+### Transform Behavioral Data `step_x`
+
+```{r}
+transform_step_1 <- function(df) {
+  df %>%
+    dplyr::mutate(
+      # do something with the participant data frame and change step_1 field
+    )
+}
+
+ls(b_df_hash) %>%
+  purrr:::map(~ b_df_hash[[.x]]) %>%
+  purrr::map(transform_step_1)
 ```
 
 ## Eye Tracker Data Preprocessing
