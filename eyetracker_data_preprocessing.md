@@ -138,3 +138,48 @@ sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3
     ## [28]  59.169  63.325  64.039  72.231  73.695  74.839  79.483  79.915  80.015
     ## [37]  84.351  95.241  99.463 113.003 115.135 116.207 135.669 139.489 145.689
     ## [46] 155.581 212.885 240.137 263.149
+
+### Begin looking at participant CSN001
+
+#### Time between calibration and validation
+
+``` r
+csn001_events <- etd_events[[1]]
+recording_time_df <- get_recording_time_df(id_vector)
+
+csn001_recordings <- recording_time_df %>% filter(id == 1)
+csn001_recordings$calibration
+```
+
+    ## [1] 881864
+
+``` r
+csn001_events %>% 
+  filter(sttime > csn001_recordings$calibration) %>% 
+  relocate(message)
+```
+
+    ## # A tibble: 20,855 x 36
+    ##    message  time  type  read sttime entime  hstx  hsty  gstx  gsty   sta  henx
+    ##    <chr>   <dbl> <dbl> <dbl>  <dbl>  <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+    ##  1  <NA>       0     7  7049 8.82e5      0   -30  2906  286.  419.  5301     0
+    ##  2  <NA>       0     8  7167 8.82e5 881936   -30  2906  286.  419.  5301   -24
+    ##  3  <NA>       0    18    64 8.82e5 881939     0     0    0     0      0     0
+    ##  4  <NA>       0    16    64 8.82e5 881939     0     0    0     0      0     0
+    ##  5 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
+    ##  6 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
+    ##  7 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
+    ##  8 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
+    ##  9 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
+    ## 10 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
+    ## # … with 20,845 more rows, and 24 more variables: heny <dbl>, genx <dbl>,
+    ## #   geny <dbl>, ena <dbl>, havx <dbl>, havy <dbl>, gavx <dbl>, gavy <dbl>,
+    ## #   ava <dbl>, avel <dbl>, pvel <dbl>, svel <dbl>, evel <dbl>, supd_x <dbl>,
+    ## #   eupd_x <dbl>, supd_y <dbl>, eupd_y <dbl>, eye <dbl>, status <dbl>,
+    ## #   flags <dbl>, input <dbl>, buttons <dbl>, parsedby <dbl>, codestring <chr>
+
+``` r
+(1006763    - 881874) / 1000
+```
+
+    ## [1] 124.889

@@ -141,3 +141,21 @@ recording_time_df_minutes <- get_recording_time_df(id_vector, 1000 * 60)
 sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3600)
 ```
 
+### Begin looking at participant CSN001
+
+#### Time between calibration and validation
+
+```{r}
+csn001_events <- etd_events[[1]]
+recording_time_df <- get_recording_time_df(id_vector)
+
+csn001_recordings <- recording_time_df %>% filter(id == 1)
+csn001_recordings$calibration
+
+csn001_events %>% 
+  filter(sttime > csn001_recordings$calibration) %>% 
+  relocate(message)
+```
+```{r}
+(1006763	- 881874) / 1000
+```
