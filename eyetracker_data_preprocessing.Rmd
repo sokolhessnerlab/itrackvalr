@@ -27,7 +27,7 @@ root_path <- "/Volumes/shlab/Projects/CSN/data/extracted/eyetracker"
 event_csv <- "fevent.csv"
 sample_csv <- "fsample.csv"
 ioevent_csv <- "ioevent.csv"
-recordings <- "recordings.csv"
+recordings_csv <- "recordings.csv"
 
 id_prefix <- "CSN"
 id_length <- 3
@@ -35,49 +35,106 @@ min_id <- 1
 max_id <- 57
 ```
 
-## Eyetracking Data (ETD) Loader by ID
+## Loading methods
 
 ```{r}
-load_etd_by_id <- function(id, filename_csv = sample_csv) {
-  # Returns tibble of loaded csv file by integer id
-  # Filename can be one of event, sample, ioevent, recordings,
-  #   prefixed with `_csv`; default is sample.
+get_path_to_id <- function(id) {
   padded_id <- stringr::str_pad(id, 3, pad = "0")
   participant_id <- stringr::str_c(id_prefix, padded_id)
-  path_to_etd <- file.path(root_path, participant_id, filename_csv)
-  if (file.exists(path_to_etd)) {
-    return(readr::read_csv(path_to_etd))
-  } else {
-    return(NULL)
+  return(file.path(root_path, participant_id))
+}
+
+get_id_vector <- function() {
+  # Gets a vector of id integers for participants
+  id_vector <- c()
+  for (i in min_id:max_id) {
+    if ( dir.exists(get_path_to_id(i)) ) {
+      id_vector <- c(id_vector, i)
+    }
   }
+  return(id_vector)
+}
+
+load_all_etd_by_filename_csv <-function(id_vector, filename_csv = sample_csv) {
+  # Loads all eyetracking data of given filename across participants
+  etd_list <- list()
+  for (id in id_vector) {
+    path_to_etd <- file.path(get_path_to_id(id), filename_csv)
+    etd_list[[id]] <- readr::read_csv(path_to_etd)
+  }
+  return(etd_list)
+}
+
+id_vector <- get_id_vector()
+```
+
+## Load each data for all participants
+
+```{r, message=FALSE}
+etd_events <- load_all_etd_by_filename_csv(id_vector, event_csv)
+etd_ioevents <- load_all_etd_by_filename_csv(id_vector, ioevent_csv)
+etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
+# TAKES A LOT OF TIME TO LOAD. UNCOMMENT IF WANTED.
+#etd_samples <- load_all_etd_by_filename_csv(id_vector, sample_csv)
+```
+
+### Recordings data methods using `etd_recordings` list
+
+```{r}
+get_duration <- function(id) {
+  # Duration from highest start time and lowest start time, in minutes
+  summary <- etd_recordings[[id]] %>% 
+    summarize(duration = (max(time) - min(time)) / (1000*60) ) %>%
+    unnest(cols = c())
+  return(summary$duration)
+}
+
+get_durations <- function(id_vector) {
+  # Durations in minutes for all participants events' data
+  durations <- c()
+  for (i in id_vector) {
+    durations <- c(durations, get_duration(i))
+  }
+  return(durations)
+}
+
+get_recording_time_matrix <- function(id_vector, dimensional_reducer = 1) {
+  # Get a built matrix with a row for each id in id_vector, with four
+  # times per row. Optional dimensional reducer to achieve times in seconds, minutes.
+  n_ids <- length(id_vector)
+  n_recordings <- 1 + length(etd_recordings[[id_vector[[1]]]]$time)
+  recording_time_matrix <- matrix(NA, nrow=n_ids, ncol=n_recordings)
+  
+  for (i in 1:n_ids) {
+    id <- id_vector[i]
+    recording_time_matrix[i,] <- c(id, (etd_recordings[[id]]$time / dimensional_reducer))
+  }
+  
+  return(recording_time_matrix)
+  
+}
+
+get_recording_time_df <- function(id_vector, dimensional_reducer = 1) {
+  # Get dataframe using matrix of ids and times from recordings. Optional
+  # dimensional reducer to achieve times in seconds, minutes.
+  m <- get_recording_time_matrix(id_vector, dimensional_reducer)
+  df <- as.data.frame(m)
+  recording_time_df_cols <- c("id", "calibration", "validation", "task", "revalidation")
+  colnames(df) <- recording_time_df_cols
+  
+  return(df)
+  
 }
 ```
 
-# Preprocessing of CSN001
+### Look at recording times
 
-## Calibration/Validation
-
-```{r}
-csn001_event <- load_etd_by_id(1, event_csv)
-
-csn001_event_cal <- csn001_event %>% dplyr::filter(stringr::str_detect(message, "!CAL"))
-csn001_event_val <- csn001_event %>% dplyr::filter(stringr::str_detect(message, "VALIDATE"))
-```
+Can retrieve all recording moments across participants by seconds or minutes. In seconds, the difference between revalidation and task time, then subtracting 3600, provides an idea of how much "overtime" the task went.
 
 ```{r}
-csn001_event %>% 
-  summarize(duration = (max(sttime) - min(sttime)) / (1000*60))
+recording_time_df_seconds <- get_recording_time_df(id_vector, 1000)
+recording_time_df_minutes <- get_recording_time_df(id_vector, 1000 * 60)
+
+sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3600)
 ```
-
-# Preprocessing applied generally to participants
-
-```{r}
-for (i in min_id:max_id) {
-  print(i)
-}
-```
-
-
-
-
 
