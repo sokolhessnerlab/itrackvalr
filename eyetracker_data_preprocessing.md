@@ -1,31 +1,17 @@
----
-title: "Eyetracker Data Preprocessing"
-author: "Ari Dyckovsky"
-output:
-  md_document:
-    variant: markdown_github
----
+Eyetracker Data Preprocessing
+=============================
 
-# Eyetracker Data Preprocessing
+Load packages
+-------------
 
-```{r, setup, include=FALSE}
-knitr::opts_chunk$set(
-  warning = FALSE,
-  strip.white = TRUE,
-  tidy = TRUE,
-  highlight = TRUE
-)
-```
-
-## Load packages
-
-```{r, libraries, message=FALSE}
+``` r
 library(tidyverse)
 ```
 
-## File path definitions
+File path definitions
+---------------------
 
-```{r}
+``` r
 root_path <- "/Volumes/shlab/Projects/CSN/data/extracted/eyetracker"
 event_csv <- "fevent.csv"
 sample_csv <- "fsample.csv"
@@ -38,9 +24,10 @@ min_id <- 1
 max_id <- 57
 ```
 
-## Loading methods
+Loading methods
+---------------
 
-```{r}
+``` r
 get_path_to_id <- function(id) {
   padded_id <- stringr::str_pad(id, 3, pad = "0")
   participant_id <- stringr::str_c(id_prefix, padded_id)
@@ -71,9 +58,10 @@ load_all_etd_by_filename_csv <-function(id_vector, filename_csv = sample_csv) {
 id_vector <- get_id_vector()
 ```
 
-## Load each data for all participants
+Load each data for all participants
+-----------------------------------
 
-```{r, message=FALSE}
+``` r
 etd_events <- load_all_etd_by_filename_csv(id_vector, event_csv)
 etd_ioevents <- load_all_etd_by_filename_csv(id_vector, ioevent_csv)
 etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
@@ -83,7 +71,7 @@ etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
 
 ### Recordings data methods using `etd_recordings` list
 
-```{r}
+``` r
 get_duration <- function(id) {
   # Duration from highest start time and lowest start time, in minutes
   summary <- etd_recordings[[id]] %>% 
@@ -132,12 +120,21 @@ get_recording_time_df <- function(id_vector, dimensional_reducer = 1) {
 
 ### Look at recording times
 
-Can retrieve all recording moments across participants by seconds or minutes. In seconds, the difference between revalidation and task time, then subtracting 3600, provides an idea of how much "overtime" the task went.
+Can retrieve all recording moments across participants by seconds or
+minutes. In seconds, the difference between revalidation and task time,
+then subtracting 3600, provides an idea of how much “overtime” the task
+went.
 
-```{r}
+``` r
 recording_time_df_seconds <- get_recording_time_df(id_vector, 1000)
 recording_time_df_minutes <- get_recording_time_df(id_vector, 1000 * 60)
 
 sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3600)
 ```
 
+    ##  [1]  25.149  28.309  31.267  31.483  31.733  32.517  32.635  33.821  34.419
+    ## [10]  38.285  39.071  39.623  40.975  44.711  44.805  45.775  45.877  46.277
+    ## [19]  47.045  48.175  49.093  49.677  50.481  52.581  53.299  55.383  56.825
+    ## [28]  59.169  63.325  64.039  72.231  73.695  74.839  79.483  79.915  80.015
+    ## [37]  84.351  95.241  99.463 113.003 115.135 116.207 135.669 139.489 145.689
+    ## [46] 155.581 212.885 240.137 263.149
