@@ -69,6 +69,92 @@ etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
 #etd_samples <- load_all_etd_by_filename_csv(id_vector, sample_csv)
 ```
 
+### Events data methods using `edt_events` list
+
+``` r
+CALIBRATION_RESULT_MESSAGE <- "!CAL CALIBRATION HV9 R RIGHT"
+VALIDATION_RESULT_MESSAGE <- "!CAL VALIDATION HV9 R RIGHT"
+CATEGORY_STRING_PATTERN <- "CALIBRATION|VALIDATION"
+QUALITY_STRING_PATTERN <- "GOOD|FAIR|POOR"
+AVG_ERROR_STRING_INDEX <- 8
+MAX_ERROR_STRING_INDEX <- 10
+DEG_OFFSET_STRING_INDEX <- 13
+PIX_OFFSET_STRING_INDEX <- 15
+
+
+get_category_from_message <- function(message) {
+  # Extract the category of event message
+  as.character(str_extract(message, CATEGORY_STRING_PATTERN))
+}
+
+
+get_quality_from_message <- function(message) {
+  # Extract the quality of calibration or validation from event message
+  as.character(str_extract(message, QUALITY_STRING_PATTERN))
+}
+
+
+get_avg_error_from_message <- function(message) {
+  # Extract the avg error of validation
+  as.double(word(message, AVG_ERROR_STRING_INDEX))
+}
+
+
+get_max_error_from_message <- function(message) {
+  # Extract the max error of validation
+  as.double(word(message, MAX_ERROR_STRING_INDEX))
+}
+
+
+get_deg_offset_from_message <- function(message) {
+  # Extract the deg offset of validation
+  as.double(word(message, DEG_OFFSET_STRING_INDEX))
+}
+
+
+get_pix_offset_from_message <- function(message) {
+  # Extract the x coordinate of pix offset of validation
+  word(message, PIX_OFFSET_STRING_INDEX)
+}
+
+
+format_event_result_messages <- function(participant_events) {
+  participant_events %>%
+    select(message, sttime) %>%
+    transmute(message = str_squish(str_trim(message)), sttime = sttime) %>%
+    filter(str_detect(message, CALIBRATION_RESULT_MESSAGE) | str_detect(message, VALIDATION_RESULT_MESSAGE)) %>%
+    mutate(
+      category = get_category_from_message(message),
+      quality = get_quality_from_message(message),
+      avg_error = get_avg_error_from_message(message),
+      max_error = get_max_error_from_message(message),
+      deg_offset = get_deg_offset_from_message(message),
+      pix_offset = get_pix_offset_from_message(message)
+    ) %>%
+    separate(pix_offset, c("pix_x_offset", "pix_y_offset"), ",") %>%
+    mutate(
+      pix_x_offset = as.double(pix_x_offset),
+      pix_y_offset = as.double(pix_y_offset)
+    ) %>%
+    relocate(-message)
+}
+
+# Output a single participant's important calibration/validation info
+format_event_result_messages(etd_events[[1]])
+```
+
+    ## # A tibble: 7 x 9
+    ##   sttime category quality avg_error max_error deg_offset pix_x_offset
+    ##    <dbl> <chr>    <chr>       <dbl>     <dbl>      <dbl>        <dbl>
+    ## 1 1.06e6 CALIBRA… GOOD        NA        NA         NA            NA  
+    ## 2 1.08e6 CALIBRA… GOOD        NA        NA         NA            NA  
+    ## 3 1.10e6 VALIDAT… POOR         4.66     23.6        4.37        168. 
+    ## 4 1.15e6 CALIBRA… GOOD        NA        NA         NA            NA  
+    ## 5 1.17e6 CALIBRA… GOOD        NA        NA         NA            NA  
+    ## 6 1.20e6 VALIDAT… POOR         2.05      9.27       1.46         39.3
+    ## 7 5.12e6 VALIDAT… POOR         2.25      8.98       1.44         55.1
+    ## # … with 2 more variables: pix_y_offset <dbl>, message <chr>
+
 ### Recordings data methods using `etd_recordings` list
 
 ``` r
@@ -138,48 +224,3 @@ sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3
     ## [28]  59.169  63.325  64.039  72.231  73.695  74.839  79.483  79.915  80.015
     ## [37]  84.351  95.241  99.463 113.003 115.135 116.207 135.669 139.489 145.689
     ## [46] 155.581 212.885 240.137 263.149
-
-### Begin looking at participant CSN001
-
-#### Time between calibration and validation
-
-``` r
-csn001_events <- etd_events[[1]]
-recording_time_df <- get_recording_time_df(id_vector)
-
-csn001_recordings <- recording_time_df %>% filter(id == 1)
-csn001_recordings$calibration
-```
-
-    ## [1] 881864
-
-``` r
-csn001_events %>% 
-  filter(sttime > csn001_recordings$calibration) %>% 
-  relocate(message)
-```
-
-    ## # A tibble: 20,855 x 36
-    ##    message  time  type  read sttime entime  hstx  hsty  gstx  gsty   sta  henx
-    ##    <chr>   <dbl> <dbl> <dbl>  <dbl>  <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-    ##  1  <NA>       0     7  7049 8.82e5      0   -30  2906  286.  419.  5301     0
-    ##  2  <NA>       0     8  7167 8.82e5 881936   -30  2906  286.  419.  5301   -24
-    ##  3  <NA>       0    18    64 8.82e5 881939     0     0    0     0      0     0
-    ##  4  <NA>       0    16    64 8.82e5 881939     0     0    0     0      0     0
-    ##  5 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
-    ##  6 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
-    ##  7 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
-    ##  8 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
-    ##  9 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
-    ## 10 "!CAL …     0    24     1 1.01e6      0     0     0    0     0      0     0
-    ## # … with 20,845 more rows, and 24 more variables: heny <dbl>, genx <dbl>,
-    ## #   geny <dbl>, ena <dbl>, havx <dbl>, havy <dbl>, gavx <dbl>, gavy <dbl>,
-    ## #   ava <dbl>, avel <dbl>, pvel <dbl>, svel <dbl>, evel <dbl>, supd_x <dbl>,
-    ## #   eupd_x <dbl>, supd_y <dbl>, eupd_y <dbl>, eye <dbl>, status <dbl>,
-    ## #   flags <dbl>, input <dbl>, buttons <dbl>, parsedby <dbl>, codestring <chr>
-
-``` r
-(1006763    - 881874) / 1000
-```
-
-    ## [1] 124.889

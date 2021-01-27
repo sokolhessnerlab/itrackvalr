@@ -81,9 +81,84 @@ etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
 #etd_samples <- load_all_etd_by_filename_csv(id_vector, sample_csv)
 ```
 
+### Events data methods using `edt_events` list
+
+```{r, events-data-methods}
+CALIBRATION_RESULT_MESSAGE <- "!CAL CALIBRATION HV9 R RIGHT"
+VALIDATION_RESULT_MESSAGE <- "!CAL VALIDATION HV9 R RIGHT"
+CATEGORY_STRING_PATTERN <- "CALIBRATION|VALIDATION"
+QUALITY_STRING_PATTERN <- "GOOD|FAIR|POOR"
+AVG_ERROR_STRING_INDEX <- 8
+MAX_ERROR_STRING_INDEX <- 10
+DEG_OFFSET_STRING_INDEX <- 13
+PIX_OFFSET_STRING_INDEX <- 15
+
+
+get_category_from_message <- function(message) {
+  # Extract the category of event message
+  as.character(str_extract(message, CATEGORY_STRING_PATTERN))
+}
+
+
+get_quality_from_message <- function(message) {
+  # Extract the quality of calibration or validation from event message
+  as.character(str_extract(message, QUALITY_STRING_PATTERN))
+}
+
+
+get_avg_error_from_message <- function(message) {
+  # Extract the avg error of validation
+  as.double(word(message, AVG_ERROR_STRING_INDEX))
+}
+
+
+get_max_error_from_message <- function(message) {
+  # Extract the max error of validation
+  as.double(word(message, MAX_ERROR_STRING_INDEX))
+}
+
+
+get_deg_offset_from_message <- function(message) {
+  # Extract the deg offset of validation
+  as.double(word(message, DEG_OFFSET_STRING_INDEX))
+}
+
+
+get_pix_offset_from_message <- function(message) {
+  # Extract the x coordinate of pix offset of validation
+  word(message, PIX_OFFSET_STRING_INDEX)
+}
+
+
+format_event_result_messages <- function(participant_events) {
+  participant_events %>%
+    select(message, sttime) %>%
+    transmute(message = str_squish(str_trim(message)), sttime = sttime) %>%
+    filter(str_detect(message, CALIBRATION_RESULT_MESSAGE) | str_detect(message, VALIDATION_RESULT_MESSAGE)) %>%
+    mutate(
+      category = get_category_from_message(message),
+      quality = get_quality_from_message(message),
+      avg_error = get_avg_error_from_message(message),
+      max_error = get_max_error_from_message(message),
+      deg_offset = get_deg_offset_from_message(message),
+      pix_offset = get_pix_offset_from_message(message)
+    ) %>%
+    separate(pix_offset, c("pix_x_offset", "pix_y_offset"), ",") %>%
+    mutate(
+      pix_x_offset = as.double(pix_x_offset),
+      pix_y_offset = as.double(pix_y_offset)
+    ) %>%
+    relocate(-message)
+}
+
+# Output a single participant's important calibration/validation info
+format_event_result_messages(etd_events[[1]])
+
+```
+
 ### Recordings data methods using `etd_recordings` list
 
-```{r}
+```{r, recordings-data-methods}
 get_duration <- function(id) {
   # Duration from highest start time and lowest start time, in minutes
   summary <- etd_recordings[[id]] %>% 
@@ -141,21 +216,4 @@ recording_time_df_minutes <- get_recording_time_df(id_vector, 1000 * 60)
 sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3600)
 ```
 
-### Begin looking at participant CSN001
 
-#### Time between calibration and validation
-
-```{r}
-csn001_events <- etd_events[[1]]
-recording_time_df <- get_recording_time_df(id_vector)
-
-csn001_recordings <- recording_time_df %>% filter(id == 1)
-csn001_recordings$calibration
-
-csn001_events %>% 
-  filter(sttime > csn001_recordings$calibration) %>% 
-  relocate(message)
-```
-```{r}
-(1006763	- 881874) / 1000
-```
