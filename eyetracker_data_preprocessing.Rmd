@@ -264,8 +264,9 @@ get_all_times_with_validations <- function(id_vector) {
 
 ### Combine recording times with significant event details per participant
 
-```{r, combine-recording-events}
-get_all_times_with_validations(id_vector)
+```{r, combine-recording-events, message=FALSE}
+# For demonstartion purposes, first 10 rows
+get_all_times_with_validations(id_vector) %>% slice_head(n = 10)
 ```
 
 
