@@ -160,7 +160,7 @@ get_event_messages <- function(participant_events) {
 
 ```{r}
 # Output a single participant's important calibration/validation info
-get_event_messages(etd_events[[1]]) 
+get_event_messages(etd_events[[5]]) 
 ```
 
 ### Recordings data methods using `etd_recordings` list
