@@ -349,19 +349,21 @@ make_pretty_df(
 )
 ```
 
-Check how average error changes between validation and revalidation:
+Mutate to get change in average error, max error, and pixel offsets. 
 
 ```{r}
-avg_error_changes_df <- recording_and_val_reval_df %>%
+val_reval_changes_df <- recording_and_val_reval_df %>%
     mutate(
       avg_error_change = avg_error_reval - avg_error_val,
-      max_error_change = max_error_reval - max_error_val
+      max_error_change = max_error_reval - max_error_val,
+      pix_x_offset_change = pix_x_offset_reval - pix_x_offset_val,
+      pix_y_offset_change = pix_y_offset_reval - pix_y_offset_val
     ) %>%
-    relocate(c(avg_error_change, max_error_change), .after = id) %>%
+    relocate(c(avg_error_change, max_error_change, pix_x_offset_change, pix_y_offset_change), .after = id) %>%
     arrange(abs(avg_error_change))
 
 make_pretty_df(
-  tail(avg_error_changes_df, 10)
+  tail(val_reval_changes_df, 10)
 )
 ```
 
@@ -371,7 +373,7 @@ Compare the average error between validation and revalidation across
 participants using a Pearson's product-moment correlation. Do the same for max error.
 
 ```{r}
-low_avg_error_df <- avg_error_changes_df %>%
+low_avg_error_df <- val_reval_changes_df %>%
   filter(avg_error_change < 7)
 
 avg_error_corr <- cor.test(
@@ -392,10 +394,10 @@ avg_error_corr
 max_error_corr
 ```
 
-### Method for making correlation scatter plot
+### Methods for correlation plots
 
 ```{r}
-get_val_reval_error_correlation_plot <- function(df, measure) {
+get_error_correlation_plot <- function(df, measure) {
   
   ggscatter(
     data = df, 
@@ -414,15 +416,132 @@ get_val_reval_error_correlation_plot <- function(df, measure) {
   )
   
 }
+
+get_offset_correlation_plot <- function(df, measure) {
+  
+  ggscatter(
+    data = df, 
+    x = str_glue("pix_{ measure }_offset_val"), 
+    y = str_glue("pix_{ measure }_offset_reval"),
+    add = "reg.line",
+    add.params = list(color = "blue", fill = "lightgray"),
+    conf.int = TRUE
+  ) +
+  stat_cor(method = "pearson") +
+  theme_pubr() +
+  labs(
+    title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) changes between validation and revalidation")),
+    x = tools::toTitleCase(str_glue("{ measure } Offset in Validation (px)")),
+    y = tools::toTitleCase(str_glue("{ measure } Offset in Revalidation (px)"))
+  )
+  
+}
+
+get_offset_boxplot <- function(df, group, measure) {
+  
+  ggboxplot(
+    data = df,
+    x = str_glue("{ group }"),
+    y = str_glue("{ measure }"),
+    color = str_glue("{ group }"),
+    order = c("val", "reval")
+  ) +
+  theme_pubr() +
+  labs(
+    title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) from validation to revalidation"))
+  )  
+  
+}
 ```
 
 ```{r}
-get_val_reval_error_correlation_plot(recording_and_val_reval_df, "avg")
+get_error_correlation_plot(val_reval_changes_df, "avg")
 ```
 
 
 ```{r}
-get_val_reval_error_correlation_plot(recording_and_val_reval_df, "max")
+get_error_correlation_plot(val_reval_changes_df, "max")
 ```
 
+### Paired samples tests for x,y pixel offsets
 
+Create a categorized offset dataframe to use in boxplots.
+
+```{r}
+categorized_offset_df <- val_reval_changes_df %>%
+  select(id, matches("pix"), -matches("change")) %>% # remove offset change columns
+  pivot_longer(
+    cols = -c(id), # don't select for id
+    names_to = c(".value", "category"),
+    names_pattern = "pix_(.)_offset_(.*)"
+  ) %>%
+  mutate(
+    distance = sqrt(x^2 + y^2)
+  )
+
+make_pretty_df(
+  head(categorized_offset_df)
+)
+```
+
+#### Shapiro-Wilk normality tests
+
+By results of Shapiro-Wilk normality test for the x offset (p < 0.05), we may
+reject the normality hypothesis, so should use the paired samples Wilcoxon
+test. Regarding y offset (p = 0.41), we can assume normality and run a paired
+samples t-test.
+
+```{r}
+shapiro.test(val_reval_changes_df$pix_x_offset_change)
+shapiro.test(val_reval_changes_df$pix_y_offset_change)
+```
+
+Then, using the categorized offset dataframe, apply test to distance
+calculated via norming (x,y) and origin. It's very likely the distances
+from betweeen validation and revalidation are not normally distributed (p << 0.05).
+
+```{r}
+shapiro.test(categorized_offset_df$distance)
+```
+
+#### Paired samples Wilcoxon test for x offset:
+
+```{r}
+wilcox.test(
+  x = val_reval_changes_df$pix_x_offset_val, 
+  y = val_reval_changes_df$pix_x_offset_reval,
+  paired = TRUE
+)
+```
+
+```{r}
+get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "x")
+```
+
+#### Paired samples t-test for y offset
+
+```{r}
+t.test(
+  x = val_reval_changes_df$pix_y_offset_val, 
+  y = val_reval_changes_df$pix_y_offset_reval,
+  paired = TRUE
+)
+```
+
+```{r}
+get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "y")
+```
+
+#### Paired samples Wilcoxon test for distance
+
+```{r}
+wilcox.test(
+  distance ~ category,
+  data = categorized_offset_df,
+  paired = TRUE
+)
+```
+
+```{r}
+get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "distance")
+```

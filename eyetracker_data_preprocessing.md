@@ -366,34 +366,36 @@ make_pretty_df(
 |   10|    1,653,320|   1,653,401|   2,587,336|     6,233,213|    2,526,494| POOR         |             0.84|             2.31|              0.37|                 13.5|                 -6.2|      6,253,298| POOR           |               2.09|               4.75|                1.89|                  -34.7|                  -81.7|
 |   11|    1,071,538|   1,071,611|   1,346,862|     5,061,997|    1,247,087| POOR         |             0.84|             3.07|              0.73|                 17.7|                -24.3|      5,083,297| POOR           |               4.70|              21.47|                4.29|                  129.0|                 -107.7|
 
-Check how average error changes between validation and revalidation:
+Mutate to get change in average error, max error, and pixel offsets.
 
 ``` r
-avg_error_changes_df <- recording_and_val_reval_df %>%
+val_reval_changes_df <- recording_and_val_reval_df %>%
     mutate(
       avg_error_change = avg_error_reval - avg_error_val,
-      max_error_change = max_error_reval - max_error_val
+      max_error_change = max_error_reval - max_error_val,
+      pix_x_offset_change = pix_x_offset_reval - pix_x_offset_val,
+      pix_y_offset_change = pix_y_offset_reval - pix_y_offset_val
     ) %>%
-    relocate(c(avg_error_change, max_error_change), .after = id) %>%
+    relocate(c(avg_error_change, max_error_change, pix_x_offset_change, pix_y_offset_change), .after = id) %>%
     arrange(abs(avg_error_change))
 
 make_pretty_df(
-  tail(avg_error_changes_df, 10)
+  tail(val_reval_changes_df, 10)
 )
 ```
 
-|     |   id|  avg\_error\_change|  max\_error\_change|  calibration|  validation|        task|  revalidation|  sttime\_val| quality\_val |  avg\_error\_val|  max\_error\_val|  deg\_offset\_val|  pix\_x\_offset\_val|  pix\_y\_offset\_val|  sttime\_reval| quality\_reval |  avg\_error\_reval|  max\_error\_reval|  deg\_offset\_reval|  pix\_x\_offset\_reval|  pix\_y\_offset\_reval|
-|-----|----:|-------------------:|-------------------:|------------:|-----------:|-----------:|-------------:|------------:|:-------------|----------------:|----------------:|-----------------:|--------------------:|--------------------:|--------------:|:---------------|------------------:|------------------:|-------------------:|----------------------:|----------------------:|
-| 40  |   10|                1.25|                2.44|    1,653,320|   1,653,401|   2,587,336|     6,233,213|    2,526,494| POOR         |             0.84|             2.31|              0.37|                 13.5|                 -6.2|      6,253,298| POOR           |               2.09|               4.75|                1.89|                  -34.7|                  -81.7|
-| 41  |   36|                1.25|                1.26|    1,792,202|   1,792,271|   2,072,262|     5,724,843|    1,999,466| GOOD         |             0.56|             1.26|              0.35|                  8.6|                 -9.3|      5,758,481| POOR           |               1.81|               2.52|                1.76|                  -32.5|                  -57.2|
-| 42  |   33|                1.34|                1.59|    1,034,034|   1,034,097|   1,132,234|     4,785,533|    1,076,788| GOOD         |             0.49|             0.84|              0.26|                  0.3|                -11.9|      4,809,206| POOR           |               1.83|               2.43|                1.77|                  -58.3|                  -35.0|
-| 43  |   45|                1.40|               10.09|    6,624,006|   6,624,071|   6,822,626|    10,454,109|    6,778,190| GOOD         |             0.19|             0.42|              0.05|                 -0.3|                 -2.4|     10,482,390| POOR           |               1.59|              10.51|                1.50|                   68.4|                   -5.9|
-| 44  |    2|                1.41|                0.38|    1,330,220|   1,330,285|   2,036,216|     5,899,365|    1,909,910| POOR         |             1.54|             3.32|              0.56|                -16.7|                -16.3|      5,928,119| POOR           |               2.95|               3.70|                1.66|                   -9.1|                   76.2|
-| 45  |   15|                1.45|                2.32|      837,690|     837,753|   1,236,256|     4,874,541|    1,189,741| GOOD         |             0.75|             0.96|              0.51|                 -2.4|                 18.9|      4,895,318| POOR           |               2.20|               3.28|                2.12|                  -82.3|                    3.9|
-| 46  |   35|                1.48|                0.56|    1,925,192|   1,925,273|   2,138,940|     5,818,423|    2,077,112| FAIR         |             0.53|             1.81|              0.41|                  9.9|                 12.9|      5,839,338| POOR           |               2.01|               2.37|                1.91|                  -74.0|                    9.9|
-| 47  |   17|                1.48|                0.10|   14,292,540|  14,292,591|  14,565,532|    18,224,701|   14,512,561| POOR         |             0.57|             2.54|              0.44|                  6.8|                 15.8|     18,246,979| POOR           |               2.05|               2.64|                1.98|                  -60.4|                   63.0|
-| 48  |   27|                1.74|                2.19|    2,756,622|   2,756,703|   3,214,436|     6,853,507|    3,095,729| POOR         |             1.59|             4.61|              1.43|                -39.6|                 44.0|      6,875,392| POOR           |               3.33|               6.80|                3.15|                 -113.5|                   43.9|
-| 49  |   11|                3.86|               18.40|    1,071,538|   1,071,611|   1,346,862|     5,061,997|    1,247,087| POOR         |             0.84|             3.07|              0.73|                 17.7|                -24.3|      5,083,297| POOR           |               4.70|              21.47|                4.29|                  129.0|                 -107.7|
+|     |   id|  avg\_error\_change|  max\_error\_change|  pix\_x\_offset\_change|  pix\_y\_offset\_change|  calibration|  validation|        task|  revalidation|  sttime\_val| quality\_val |  avg\_error\_val|  max\_error\_val|  deg\_offset\_val|  pix\_x\_offset\_val|  pix\_y\_offset\_val|  sttime\_reval| quality\_reval |  avg\_error\_reval|  max\_error\_reval|  deg\_offset\_reval|  pix\_x\_offset\_reval|  pix\_y\_offset\_reval|
+|-----|----:|-------------------:|-------------------:|-----------------------:|-----------------------:|------------:|-----------:|-----------:|-------------:|------------:|:-------------|----------------:|----------------:|-----------------:|--------------------:|--------------------:|--------------:|:---------------|------------------:|------------------:|-------------------:|----------------------:|----------------------:|
+| 40  |   10|                1.25|                2.44|                   -48.2|                   -75.5|    1,653,320|   1,653,401|   2,587,336|     6,233,213|    2,526,494| POOR         |             0.84|             2.31|              0.37|                 13.5|                 -6.2|      6,253,298| POOR           |               2.09|               4.75|                1.89|                  -34.7|                  -81.7|
+| 41  |   36|                1.25|                1.26|                   -41.1|                   -47.9|    1,792,202|   1,792,271|   2,072,262|     5,724,843|    1,999,466| GOOD         |             0.56|             1.26|              0.35|                  8.6|                 -9.3|      5,758,481| POOR           |               1.81|               2.52|                1.76|                  -32.5|                  -57.2|
+| 42  |   33|                1.34|                1.59|                   -58.6|                   -23.1|    1,034,034|   1,034,097|   1,132,234|     4,785,533|    1,076,788| GOOD         |             0.49|             0.84|              0.26|                  0.3|                -11.9|      4,809,206| POOR           |               1.83|               2.43|                1.77|                  -58.3|                  -35.0|
+| 43  |   45|                1.40|               10.09|                    68.7|                    -3.5|    6,624,006|   6,624,071|   6,822,626|    10,454,109|    6,778,190| GOOD         |             0.19|             0.42|              0.05|                 -0.3|                 -2.4|     10,482,390| POOR           |               1.59|              10.51|                1.50|                   68.4|                   -5.9|
+| 44  |    2|                1.41|                0.38|                     7.6|                    92.5|    1,330,220|   1,330,285|   2,036,216|     5,899,365|    1,909,910| POOR         |             1.54|             3.32|              0.56|                -16.7|                -16.3|      5,928,119| POOR           |               2.95|               3.70|                1.66|                   -9.1|                   76.2|
+| 45  |   15|                1.45|                2.32|                   -79.9|                   -15.0|      837,690|     837,753|   1,236,256|     4,874,541|    1,189,741| GOOD         |             0.75|             0.96|              0.51|                 -2.4|                 18.9|      4,895,318| POOR           |               2.20|               3.28|                2.12|                  -82.3|                    3.9|
+| 46  |   35|                1.48|                0.56|                   -83.9|                    -3.0|    1,925,192|   1,925,273|   2,138,940|     5,818,423|    2,077,112| FAIR         |             0.53|             1.81|              0.41|                  9.9|                 12.9|      5,839,338| POOR           |               2.01|               2.37|                1.91|                  -74.0|                    9.9|
+| 47  |   17|                1.48|                0.10|                   -67.2|                    47.2|   14,292,540|  14,292,591|  14,565,532|    18,224,701|   14,512,561| POOR         |             0.57|             2.54|              0.44|                  6.8|                 15.8|     18,246,979| POOR           |               2.05|               2.64|                1.98|                  -60.4|                   63.0|
+| 48  |   27|                1.74|                2.19|                   -73.9|                    -0.1|    2,756,622|   2,756,703|   3,214,436|     6,853,507|    3,095,729| POOR         |             1.59|             4.61|              1.43|                -39.6|                 44.0|      6,875,392| POOR           |               3.33|               6.80|                3.15|                 -113.5|                   43.9|
+| 49  |   11|                3.86|               18.40|                   111.3|                   -83.4|    1,071,538|   1,071,611|   1,346,862|     5,061,997|    1,247,087| POOR         |             0.84|             3.07|              0.73|                 17.7|                -24.3|      5,083,297| POOR           |               4.70|              21.47|                4.29|                  129.0|                 -107.7|
 
 ### Correlation tests for `avg_error` and `max_error`
 
@@ -402,7 +404,7 @@ participants using a Pearson’s product-moment correlation. Do the same
 for max error.
 
 ``` r
-low_avg_error_df <- avg_error_changes_df %>%
+low_avg_error_df <- val_reval_changes_df %>%
   filter(avg_error_change < 7)
 
 avg_error_corr <- cor.test(
@@ -450,10 +452,10 @@ max_error_corr
     ##            cor 
     ## 0.420914527858
 
-### Method for making correlation scatter plot
+### Methods for correlation plots
 
 ``` r
-get_val_reval_error_correlation_plot <- function(df, measure) {
+get_error_correlation_plot <- function(df, measure) {
   
   ggscatter(
     data = df, 
@@ -472,16 +474,198 @@ get_val_reval_error_correlation_plot <- function(df, measure) {
   )
   
 }
+
+get_offset_correlation_plot <- function(df, measure) {
+  
+  ggscatter(
+    data = df, 
+    x = str_glue("pix_{ measure }_offset_val"), 
+    y = str_glue("pix_{ measure }_offset_reval"),
+    add = "reg.line",
+    add.params = list(color = "blue", fill = "lightgray"),
+    conf.int = TRUE
+  ) +
+  stat_cor(method = "pearson") +
+  theme_pubr() +
+  labs(
+    title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) changes between validation and revalidation")),
+    x = tools::toTitleCase(str_glue("{ measure } Offset in Validation (px)")),
+    y = tools::toTitleCase(str_glue("{ measure } Offset in Revalidation (px)"))
+  )
+  
+}
+
+get_offset_boxplot <- function(df, group, measure) {
+  
+  ggboxplot(
+    data = df,
+    x = str_glue("{ group }"),
+    y = str_glue("{ measure }"),
+    color = str_glue("{ group }"),
+    order = c("val", "reval")
+  ) +
+  theme_pubr() +
+  labs(
+    title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) from validation to revalidation"))
+  )  
+  
+}
 ```
 
 ``` r
-get_val_reval_error_correlation_plot(recording_and_val_reval_df, "avg")
+get_error_correlation_plot(val_reval_changes_df, "avg")
 ```
 
 ![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
 ``` r
-get_val_reval_error_correlation_plot(recording_and_val_reval_df, "max")
+get_error_correlation_plot(val_reval_changes_df, "max")
 ```
 
 ![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-10-1.png)
+
+### Paired samples tests for x,y pixel offsets
+
+Create a categorized offset dataframe to use in boxplots.
+
+``` r
+categorized_offset_df <- val_reval_changes_df %>%
+  select(id, matches("pix"), -matches("change")) %>% # remove offset change columns
+  pivot_longer(
+    cols = -c(id), # don't select for id
+    names_to = c(".value", "category"),
+    names_pattern = "pix_(.)_offset_(.*)"
+  ) %>%
+  mutate(
+    distance = sqrt(x^2 + y^2)
+  )
+
+make_pretty_df(
+  head(categorized_offset_df)
+)
+```
+
+|   id| category |     x|     y|       distance|
+|----:|:---------|-----:|-----:|--------------:|
+|   21| val      |  26.9|  48.3|  55.2856220007|
+|   21| reval    |   2.5|  22.9|  23.0360586907|
+|   52| val      |   3.8|  -9.4|  10.1390334845|
+|   52| reval    |   6.3|   6.0|   8.7000000000|
+|    4| val      |  15.2|   3.2|  15.5331902712|
+|    4| reval    |  10.5|  18.3|  21.0983411670|
+
+#### Shapiro-Wilk normality tests
+
+By results of Shapiro-Wilk normality test for the x offset (p \< 0.05),
+we may reject the normality hypothesis, so should use the paired samples
+Wilcoxon test. Regarding y offset (p = 0.41), we can assume normality
+and run a paired samples t-test.
+
+``` r
+shapiro.test(val_reval_changes_df$pix_x_offset_change)
+```
+
+    ## 
+    ##  Shapiro-Wilk normality test
+    ## 
+    ## data:  val_reval_changes_df$pix_x_offset_change
+    ## W = 0.9470031235, p-value = 0.0279732589
+
+``` r
+shapiro.test(val_reval_changes_df$pix_y_offset_change)
+```
+
+    ## 
+    ##  Shapiro-Wilk normality test
+    ## 
+    ## data:  val_reval_changes_df$pix_y_offset_change
+    ## W = 0.9759920276, p-value = 0.411088002
+
+Then, using the categorized offset dataframe, apply test to distance
+calculated via norming (x,y) and origin. It’s very likely the distances
+from betweeen validation and revalidation are not normally distributed
+(p \<\< 0.05).
+
+``` r
+shapiro.test(categorized_offset_df$distance)
+```
+
+    ## 
+    ##  Shapiro-Wilk normality test
+    ## 
+    ## data:  categorized_offset_df$distance
+    ## W = 0.8352729384, p-value = 4.55688657e-09
+
+#### Paired samples Wilcoxon test for x offset:
+
+``` r
+wilcox.test(
+  x = val_reval_changes_df$pix_x_offset_val, 
+  y = val_reval_changes_df$pix_x_offset_reval,
+  paired = TRUE
+)
+```
+
+    ## 
+    ##  Wilcoxon signed rank test with continuity correction
+    ## 
+    ## data:  val_reval_changes_df$pix_x_offset_val and val_reval_changes_df$pix_x_offset_reval
+    ## V = 524.5, p-value = 0.384079427
+    ## alternative hypothesis: true location shift is not equal to 0
+
+``` r
+get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "x")
+```
+
+![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-15-1.png)
+
+#### Paired samples t-test for y offset
+
+``` r
+t.test(
+  x = val_reval_changes_df$pix_y_offset_val, 
+  y = val_reval_changes_df$pix_y_offset_reval,
+  paired = TRUE
+)
+```
+
+    ## 
+    ##  Paired t-test
+    ## 
+    ## data:  val_reval_changes_df$pix_y_offset_val and val_reval_changes_df$pix_y_offset_reval
+    ## t = 0.1455552207, df = 48, p-value = 0.884882047
+    ## alternative hypothesis: true difference in means is not equal to 0
+    ## 95 percent confidence interval:
+    ##  -10.5646437063  12.2136232981
+    ## sample estimates:
+    ## mean of the differences 
+    ##          0.824489795918
+
+``` r
+get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "y")
+```
+
+![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-17-1.png)
+
+#### Paired samples Wilcoxon test for distance
+
+``` r
+wilcox.test(
+  distance ~ category,
+  data = categorized_offset_df,
+  paired = TRUE
+)
+```
+
+    ## 
+    ##  Wilcoxon signed rank exact test
+    ## 
+    ## data:  distance by category
+    ## V = 1141, p-value = 4.23612079e-09
+    ## alternative hypothesis: true location shift is not equal to 0
+
+``` r
+get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "distance")
+```
+
+![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-19-1.png)
