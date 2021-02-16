@@ -12,7 +12,7 @@ output:
 knitr::opts_chunk$set(
   warning = FALSE,
   strip.white = TRUE,
-  tidy = TRUE,
+  #tidy = TRUE,
   highlight = TRUE,
   warning = FALSE,
   message = FALSE
@@ -25,6 +25,7 @@ knitr::opts_chunk$set(
 
 ```{r, libraries}
 library(tidyverse)
+library(ggpubr)
 ```
 
 ### Formatting
@@ -42,7 +43,8 @@ make_pretty_df <- function(df) {
 ## File path definitions
 
 ```{r}
-root_path <- "/Volumes/shlab/Projects/CSN/data/extracted/eyetracker"
+root_path <- "/Volumes/shlab/Projects/CSN"
+extracted_data_path <- "/data/extracted/eyetracker"
 event_csv <- "fevent.csv"
 sample_csv <- "fsample.csv"
 ioevent_csv <- "ioevent.csv"
@@ -60,18 +62,27 @@ max_id <- 57
 get_path_to_id <- function(id) {
   padded_id <- stringr::str_pad(id, 3, pad = "0")
   participant_id <- stringr::str_c(id_prefix, padded_id)
-  return(file.path(root_path, participant_id))
+  return (
+    file.path(
+      root_path, 
+      extracted_data_path, 
+      participant_id
+    )
+  )
 }
 
 get_id_vector <- function() {
-  # Gets a vector of id integers for participants
+  # Gets a vector of id integers for participants relative
+  # to the existence of that participant's data (some participants
+  # are not converted from raw MAT data to CSVs if not considered
+  # a complete participant)
   id_vector <- c()
   for (i in min_id:max_id) {
     if ( dir.exists(get_path_to_id(i)) ) {
       id_vector <- c(id_vector, i)
     }
   }
-  return(id_vector)
+  return (id_vector)
 }
 
 load_all_etd_by_filename_csv <-function(id_vector, filename_csv = sample_csv) {
@@ -81,7 +92,7 @@ load_all_etd_by_filename_csv <-function(id_vector, filename_csv = sample_csv) {
     path_to_etd <- file.path(get_path_to_id(id), filename_csv)
     etd_list[[id]] <- readr::read_csv(path_to_etd)
   }
-  return(etd_list)
+  return (etd_list)
 }
 
 # Convenience instantiation of the id vector for later use. Can use
@@ -150,11 +161,18 @@ get_pix_offset_from_message <- function(message) {
 
 get_event_messages <- function(participant_events) {
   # Get the significant event messages for a single participant
-  # events data by sttime, producing extracted columns from
-  # message contents.
-  participant_events %>%
+  # events data by sttime, producing the extracted rows and columns 
+  # from message contents.
+  
+  if ("df" %in% ls()) rm("df")
+  
+  # Select desired columns and remove white space around message
+  df <- participant_events %>%
     select(message, sttime) %>%
-    transmute(message = str_squish(str_trim(message)), sttime = sttime) %>%
+    transmute(message = str_squish(str_trim(message)), sttime = sttime) 
+  
+  # Extract rows from categorized event result messages
+  df <- df %>%
     filter(str_detect(message, CALIBRATION_RESULT_MESSAGE) | str_detect(message, VALIDATION_RESULT_MESSAGE)) %>%
     mutate(
       category = get_category_from_message(message),
@@ -163,13 +181,23 @@ get_event_messages <- function(participant_events) {
       max_error = get_max_error_from_message(message),
       deg_offset = get_deg_offset_from_message(message),
       pix_offset = get_pix_offset_from_message(message)
-    ) %>%
+    ) 
+  
+  # Extract columns for pixel offsets of x,y coordinates
+  df <- df %>%
     separate(pix_offset, c("pix_x_offset", "pix_y_offset"), ",") %>%
     mutate(
       pix_x_offset = as.double(pix_x_offset),
       pix_y_offset = as.double(pix_y_offset)
-    ) %>%
+    ) 
+  
+  # Move message column to last column for convenient notebook 
+  # reading of dataframe output
+  df <- df %>%
     relocate(-message)
+  
+  return (df)
+  
 }
 ```
 
@@ -278,22 +306,29 @@ get_val_reval_by_id <- function(recording_time_df, i) {
 
 
 get_all_val_reval_df <- function(id_vector) {
+  
   if ("df" %in% ls()) rm("df")
+  
   df <- data.frame()
+  
   recording_time_df <- get_recording_time_df(id_vector)
+  
   for (i in id_vector) {
     val_reval_df <- get_val_reval_by_id(recording_time_df, i)
     df <- bind_rows(df, val_reval_df)
   }
+  
   return(df)
 }
 
 get_recording_and_val_reval_df <- function(recording_time_df, all_val_reval_df) {
+  
   left_join(
     recording_time_df, 
     all_val_reval_df,
     by = c("id")
   )
+  
 }
 ```
 
@@ -326,6 +361,68 @@ avg_error_changes_df <- recording_and_val_reval_df %>%
     arrange(abs(avg_error_change))
 
 make_pretty_df(
-  head(avg_error_changes_df, 10)
+  tail(avg_error_changes_df, 10)
 )
 ```
+
+### Correlation tests for `avg_error` and `max_error`
+
+Compare the average error between validation and revalidation across
+participants using a Pearson's product-moment correlation. Do the same for max error.
+
+```{r}
+low_avg_error_df <- avg_error_changes_df %>%
+  filter(avg_error_change < 7)
+
+avg_error_corr <- cor.test(
+  low_avg_error_df$avg_error_val, 
+  low_avg_error_df$avg_error_reval,
+  method = "pearson",
+  use = "complete.obs"
+)
+
+max_error_corr <- cor.test(
+  low_avg_error_df$max_error_val, 
+  low_avg_error_df$max_error_reval,
+  method = "pearson",
+  use = "complete.obs"
+)
+
+avg_error_corr
+max_error_corr
+```
+
+### Method for making correlation scatter plot
+
+```{r}
+get_val_reval_error_correlation_plot <- function(df, measure) {
+  
+  ggscatter(
+    data = df, 
+    x = str_glue("{ measure }_error_val"), 
+    y = str_glue("{ measure }_error_reval"),
+    add = "reg.line",
+    add.params = list(color = "blue", fill = "lightgray"),
+    conf.int = TRUE
+  ) +
+  stat_cor(method = "pearson") +
+  theme_pubr() +
+  labs(
+    title = tools::toTitleCase(str_glue("Correlation of { measure } error between validation and revalidation")),
+    x = tools::toTitleCase(str_glue("{ measure } Error of Validation")),
+    y = tools::toTitleCase(str_glue("{ measure } Error of Revalidation"))
+  )
+  
+}
+```
+
+```{r}
+get_val_reval_error_correlation_plot(recording_and_val_reval_df, "avg")
+```
+
+
+```{r}
+get_val_reval_error_correlation_plot(recording_and_val_reval_df, "max")
+```
+
+

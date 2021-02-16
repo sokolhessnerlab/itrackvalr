@@ -1,7 +1,7 @@
 % CSN Convert Completed Participants' MAT to CSV
 
 % Set root data path
-datapath = '/Users/metis/Projects/shlab/mounts/csn/data';
+datapath = '/Volumes/shlab/Projects/CSN/data';
 
 % Set path to raw behavioral MAT files
 raw_behavioral_responses_path = fullfile(datapath, ...
