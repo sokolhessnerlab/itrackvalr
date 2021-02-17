@@ -433,7 +433,7 @@ get_offset_correlation_plot <- function(df, measure) {
     title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) changes between validation and revalidation")),
     x = tools::toTitleCase(str_glue("{ measure } Offset in Validation (px)")),
     y = tools::toTitleCase(str_glue("{ measure } Offset in Revalidation (px)"))
-  )
+  ) 
   
 }
 
@@ -449,13 +449,16 @@ get_offset_boxplot <- function(df, group, measure) {
   theme_pubr() +
   labs(
     title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) from validation to revalidation"))
-  )  
+  ) 
   
 }
+
 ```
 
 ```{r}
-get_error_correlation_plot(val_reval_changes_df, "avg")
+get_error_correlation_plot(val_reval_changes_df, "avg") + 
+  coord_fixed(ratio = 1) +
+  geom_abline()
 ```
 
 
@@ -544,4 +547,90 @@ wilcox.test(
 
 ```{r}
 get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "distance")
+```
+
+### Paired Plots
+
+Create a categorized error dataframe and then show an example of it.
+
+```{r}
+categorized_error_df <- val_reval_changes_df %>%
+  select(id, matches("error"), -matches("change")) %>% # remove offset change columns
+  pivot_longer(
+    cols = -c(id), # don't select for id
+    names_to = c(".value", "category"),
+    names_pattern = "(.*)_error_(.*)"
+  ) %>%
+  group_by(id) %>%
+  mutate(
+    avg_change = avg[category == "reval"] - avg[category == "val"],
+    max_change = max[category == "reval"] - max[category == "val"]
+  )
+
+make_pretty_df(
+  head(categorized_error_df)
+)
+```
+
+Look at the participants who have decreasing average errors over the course
+of the task.
+
+```{r}
+make_pretty_df(
+  categorized_error_df %>%
+    filter(avg_change < 0)
+)
+```
+
+Plot the change in average error with gradient coloring for the slope
+of average error change.
+
+```{r}
+# TODO: make a single method to produce these graphs with options
+
+categorized_error_df %>%
+  filter(avg_change < 0) %>% # only decreasing changes
+  ggplot(aes(x = factor(category, level = c("val", "reval")), y = avg, group = id)) +
+  geom_point(size = 1, alpha = 0.5) +
+  geom_line(alpha = 0.6, aes(color = avg_change)) +
+  scale_color_gradient2(low = "red", mid = "gray", high = "blue") +
+  theme_pubr() +
+  labs(
+    title = "Change in Avg Error between Validation and Revalidation",
+    subtitle = "Only Decreases in Average Error",
+    x = "Event Category",
+    y = "Avg Error"
+  ) +
+  ylim(0, 5)
+
+categorized_error_df %>%
+  filter(avg_change > 0) %>% # Only increasing changes
+  ggplot(aes(x = factor(category, level = c("val", "reval")), y = avg, group = id)) +
+  geom_point(size = 1, alpha = 0.5) +
+  geom_line(alpha = 0.6, aes(color = avg_change)) +
+  scale_color_gradient2(low = "red", mid = "gray", high = "blue") +
+  theme_pubr() +
+  labs(
+    title = "Change in Avg Error between Validation and Revalidation",
+    subtitle = "Only Increases in Average Error",
+    x = "Event Category",
+    y = "Avg Error"
+  ) +
+  ylim(0, 5)
+
+categorized_error_df %>%
+  filter(id != 11) %>% # remove CSN011
+  ggplot(aes(x = factor(category, level = c("val", "reval")), y = avg, group = id)) +
+  geom_point(size = 1, alpha = 0.5) +
+  geom_line(alpha = 0.6, aes(color = avg_change)) +
+  scale_color_gradient2(low = "red", mid = "gray", high = "blue") +
+  theme_pubr() +
+  labs(
+    title = "Change in Avg Error between Validation and Revalidation",
+    subtitle = "Excluding CSN011",
+    x = "Event Category",
+    y = "Avg Error"
+  ) +
+  ylim(0, 5)
+
 ```
