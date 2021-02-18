@@ -408,7 +408,7 @@ get_error_correlation_plot <- function(df, measure) {
     conf.int = TRUE
   ) +
   stat_cor(method = "pearson") +
-  theme_pubr() +
+  theme_classic2() +
   labs(
     title = tools::toTitleCase(str_glue("Correlation of { measure } error between validation and revalidation")),
     x = tools::toTitleCase(str_glue("{ measure } Error of Validation")),
@@ -428,7 +428,7 @@ get_offset_correlation_plot <- function(df, measure) {
     conf.int = TRUE
   ) +
   stat_cor(method = "pearson") +
-  theme_pubr() +
+  theme_classic2() +
   labs(
     title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) changes between validation and revalidation")),
     x = tools::toTitleCase(str_glue("{ measure } Offset in Validation (px)")),
@@ -446,7 +446,7 @@ get_offset_boxplot <- function(df, group, measure) {
     color = str_glue("{ group }"),
     order = c("val", "reval")
   ) +
-  theme_pubr() +
+  theme_classic2() +
   labs(
     title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) from validation to revalidation"))
   ) 
@@ -481,7 +481,6 @@ categorized_offset_df <- val_reval_changes_df %>%
   mutate(
     distance = sqrt(x^2 + y^2)
   )
-
 make_pretty_df(
   head(categorized_offset_df)
 )
@@ -551,6 +550,31 @@ get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "di
 
 ### Paired Plots
 
+Create a categorized offset dataframe and then show and example of it.
+
+```{r}
+categorized_offset_df <- val_reval_changes_df %>%
+  select(id, matches("pix"), -matches("change")) %>% # remove offset change columns
+  pivot_longer(
+    cols = -c(id), # don't select for id
+    names_to = c(".value", "category"),
+    names_pattern = "pix_(.)_offset_(.*)"
+  ) %>%
+  group_by(id) %>%
+  mutate(
+    distance = sqrt(x^2 + y^2)
+  ) %>%
+  mutate(
+    x_change = x[category == "reval"] - x[category == "val"],
+    y_change = y[category == "reval"] - y[category == "val"],
+    distance_change = distance[category == "reval"] - distance[category == "val"]
+  )
+
+make_pretty_df(
+  head(categorized_offset_df)
+)
+```
+
 Create a categorized error dataframe and then show an example of it.
 
 ```{r}
@@ -582,55 +606,100 @@ make_pretty_df(
 )
 ```
 
+### Paired plots for validation-revalidation changes
+
 Plot the change in average error with gradient coloring for the slope
 of average error change.
 
 ```{r}
-# TODO: make a single method to produce these graphs with options
+make_paired_plot <- function(categorized_df, measure) {
+  # requires a categorized dataframe, the category column selector, and measure (str)
+  plt <- categorized_df %>%
+    ggplot(aes(x = factor(category, level = c("val", "reval")), y = !!sym(measure), group = id)) +
+    geom_point(size = 1, alpha = 0.5) +
+    geom_line(alpha = 0.6, aes(color = !!sym(str_glue("{ measure }_change")))) +
+    scale_color_gradient2(low = "red", mid = "gray", high = "blue")
+  return (plt)
+}
+```
 
-categorized_error_df %>%
-  filter(avg_change < 0) %>% # only decreasing changes
-  ggplot(aes(x = factor(category, level = c("val", "reval")), y = avg, group = id)) +
-  geom_point(size = 1, alpha = 0.5) +
-  geom_line(alpha = 0.6, aes(color = avg_change)) +
-  scale_color_gradient2(low = "red", mid = "gray", high = "blue") +
-  theme_pubr() +
+#### Offset changes
+
+```{r}
+make_paired_plot(categorized_offset_df, 
+  measure = "x") +
+  labs(
+    title = "Change in X Offset between Validation and Revalidation",
+    #subtitle = "Only Decreases in Average Error",
+    x = "Event Category",
+    y = "X Offset (pixels)"
+  ) +
+  theme_classic2()
+
+make_paired_plot(categorized_offset_df, 
+  measure = "y") +
+  labs(
+    title = "Change in Y Offset between Validation and Revalidation",
+    #subtitle = "Only Decreases in Average Error",
+    x = "Event Category",
+    y = "Y Offset (pixels)"
+  ) +
+  theme_classic2()
+
+make_paired_plot(categorized_offset_df, 
+  measure = "distance") +
+  labs(
+    title = "Change in Distance Offset between Validation and Revalidation",
+    #subtitle = "Only Decreases in Average Error",
+    x = "Event Category",
+    y = "Distance Offset (pixels)"
+  ) +
+  theme_classic2()
+```
+
+#### Average error changes
+
+```{r}
+make_paired_plot(categorized_error_df %>% filter(avg_change < 0),
+  measure = "avg") +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
     subtitle = "Only Decreases in Average Error",
     x = "Event Category",
     y = "Avg Error"
   ) +
-  ylim(0, 5)
+  theme_classic2()
 
-categorized_error_df %>%
-  filter(avg_change > 0) %>% # Only increasing changes
-  ggplot(aes(x = factor(category, level = c("val", "reval")), y = avg, group = id)) +
-  geom_point(size = 1, alpha = 0.5) +
-  geom_line(alpha = 0.6, aes(color = avg_change)) +
-  scale_color_gradient2(low = "red", mid = "gray", high = "blue") +
-  theme_pubr() +
+make_paired_plot(categorized_error_df %>% filter(avg_change > 0),
+  measure = "avg") +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
     subtitle = "Only Increases in Average Error",
     x = "Event Category",
     y = "Avg Error"
   ) +
-  ylim(0, 5)
+  theme_classic2()
 
-categorized_error_df %>%
-  filter(id != 11) %>% # remove CSN011
-  ggplot(aes(x = factor(category, level = c("val", "reval")), y = avg, group = id)) +
-  geom_point(size = 1, alpha = 0.5) +
-  geom_line(alpha = 0.6, aes(color = avg_change)) +
-  scale_color_gradient2(low = "red", mid = "gray", high = "blue") +
-  theme_pubr() +
+make_paired_plot(categorized_error_df %>% filter(id != 11),
+  measure = "avg") +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
-    subtitle = "Excluding CSN011",
+    subtitle = "Only Increases in Average Error",
     x = "Event Category",
     y = "Avg Error"
   ) +
-  ylim(0, 5)
+  theme_classic2()
 
+```
+
+
+## Playground
+
+Things in progress
+
+```{r}
+make_pretty_df(
+  val_reval_changes_df %>%
+    filter(avg_error_val < 1.5 & avg_error_reval > 1.5)
+)
 ```

@@ -466,7 +466,7 @@ get_error_correlation_plot <- function(df, measure) {
     conf.int = TRUE
   ) +
   stat_cor(method = "pearson") +
-  theme_pubr() +
+  theme_classic2() +
   labs(
     title = tools::toTitleCase(str_glue("Correlation of { measure } error between validation and revalidation")),
     x = tools::toTitleCase(str_glue("{ measure } Error of Validation")),
@@ -486,7 +486,7 @@ get_offset_correlation_plot <- function(df, measure) {
     conf.int = TRUE
   ) +
   stat_cor(method = "pearson") +
-  theme_pubr() +
+  theme_classic2() +
   labs(
     title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) changes between validation and revalidation")),
     x = tools::toTitleCase(str_glue("{ measure } Offset in Validation (px)")),
@@ -504,7 +504,7 @@ get_offset_boxplot <- function(df, group, measure) {
     color = str_glue("{ group }"),
     order = c("val", "reval")
   ) +
-  theme_pubr() +
+  theme_classic2() +
   labs(
     title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) from validation to revalidation"))
   ) 
@@ -541,7 +541,6 @@ categorized_offset_df <- val_reval_changes_df %>%
   mutate(
     distance = sqrt(x^2 + y^2)
   )
-
 make_pretty_df(
   head(categorized_offset_df)
 )
@@ -674,6 +673,40 @@ get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "di
 
 ### Paired Plots
 
+Create a categorized offset dataframe and then show and example of it.
+
+``` r
+categorized_offset_df <- val_reval_changes_df %>%
+  select(id, matches("pix"), -matches("change")) %>% # remove offset change columns
+  pivot_longer(
+    cols = -c(id), # don't select for id
+    names_to = c(".value", "category"),
+    names_pattern = "pix_(.)_offset_(.*)"
+  ) %>%
+  group_by(id) %>%
+  mutate(
+    distance = sqrt(x^2 + y^2)
+  ) %>%
+  mutate(
+    x_change = x[category == "reval"] - x[category == "val"],
+    y_change = y[category == "reval"] - y[category == "val"],
+    distance_change = distance[category == "reval"] - distance[category == "val"]
+  )
+
+make_pretty_df(
+  head(categorized_offset_df)
+)
+```
+
+|   id| category |     x|     y|       distance|  x\_change|  y\_change|  distance\_change|
+|----:|:---------|-----:|-----:|--------------:|----------:|----------:|-----------------:|
+|   21| val      |  26.9|  48.3|  55.2856220007|      -24.4|      -25.4|   -32.24956330999|
+|   21| reval    |   2.5|  22.9|  23.0360586907|      -24.4|      -25.4|   -32.24956330999|
+|   52| val      |   3.8|  -9.4|  10.1390334845|        2.5|       15.4|    -1.43903348451|
+|   52| reval    |   6.3|   6.0|   8.7000000000|        2.5|       15.4|    -1.43903348451|
+|    4| val      |  15.2|   3.2|  15.5331902712|       -4.7|       15.1|     5.56515089586|
+|    4| reval    |  10.5|  18.3|  21.0983411670|       -4.7|       15.1|     5.56515089586|
+
 Create a categorized error dataframe and then show an example of it.
 
 ``` r
@@ -731,64 +764,136 @@ make_pretty_df(
 |   34| val      |  0.79|  1.10|        -0.31|         0.29|
 |   34| reval    |  0.48|  1.39|        -0.31|         0.29|
 
+### Paired plots for validation-revalidation changes
+
 Plot the change in average error with gradient coloring for the slope of
 average error change.
 
 ``` r
-# TODO: make a single method to produce these graphs with options
+make_paired_plot <- function(categorized_df, measure) {
+  # requires a categorized dataframe, the category column selector, and measure (str)
+  plt <- categorized_df %>%
+    ggplot(aes(x = factor(category, level = c("val", "reval")), y = !!sym(measure), group = id)) +
+    geom_point(size = 1, alpha = 0.5) +
+    geom_line(alpha = 0.6, aes(color = !!sym(str_glue("{ measure }_change")))) +
+    scale_color_gradient2(low = "red", mid = "gray", high = "blue")
+  return (plt)
+}
+```
 
-categorized_error_df %>%
-  filter(avg_change < 0) %>% # only decreasing changes
-  ggplot(aes(x = factor(category, level = c("val", "reval")), y = avg, group = id)) +
-  geom_point(size = 1, alpha = 0.5) +
-  geom_line(alpha = 0.6, aes(color = avg_change)) +
-  scale_color_gradient2(low = "red", mid = "gray", high = "blue") +
-  theme_pubr() +
+#### Offset changes
+
+``` r
+make_paired_plot(categorized_offset_df, 
+  measure = "x") +
+  labs(
+    title = "Change in X Offset between Validation and Revalidation",
+    #subtitle = "Only Decreases in Average Error",
+    x = "Event Category",
+    y = "X Offset (pixels)"
+  ) +
+  theme_classic2()
+```
+
+![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-24-1.png)
+
+``` r
+make_paired_plot(categorized_offset_df, 
+  measure = "y") +
+  labs(
+    title = "Change in Y Offset between Validation and Revalidation",
+    #subtitle = "Only Decreases in Average Error",
+    x = "Event Category",
+    y = "Y Offset (pixels)"
+  ) +
+  theme_classic2()
+```
+
+![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-24-2.png)
+
+``` r
+make_paired_plot(categorized_offset_df, 
+  measure = "distance") +
+  labs(
+    title = "Change in Distance Offset between Validation and Revalidation",
+    #subtitle = "Only Decreases in Average Error",
+    x = "Event Category",
+    y = "Distance Offset (pixels)"
+  ) +
+  theme_classic2()
+```
+
+![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-24-3.png)
+
+#### Average error changes
+
+``` r
+make_paired_plot(categorized_error_df %>% filter(avg_change < 0),
+  measure = "avg") +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
     subtitle = "Only Decreases in Average Error",
     x = "Event Category",
     y = "Avg Error"
   ) +
-  ylim(0, 5)
+  theme_classic2()
 ```
 
-![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-22-1.png)
+![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-25-1.png)
 
 ``` r
-categorized_error_df %>%
-  filter(avg_change > 0) %>% # Only increasing changes
-  ggplot(aes(x = factor(category, level = c("val", "reval")), y = avg, group = id)) +
-  geom_point(size = 1, alpha = 0.5) +
-  geom_line(alpha = 0.6, aes(color = avg_change)) +
-  scale_color_gradient2(low = "red", mid = "gray", high = "blue") +
-  theme_pubr() +
+make_paired_plot(categorized_error_df %>% filter(avg_change > 0),
+  measure = "avg") +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
     subtitle = "Only Increases in Average Error",
     x = "Event Category",
     y = "Avg Error"
   ) +
-  ylim(0, 5)
+  theme_classic2()
 ```
 
-![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-22-2.png)
+![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-25-2.png)
 
 ``` r
-categorized_error_df %>%
-  filter(id != 11) %>% # remove CSN011
-  ggplot(aes(x = factor(category, level = c("val", "reval")), y = avg, group = id)) +
-  geom_point(size = 1, alpha = 0.5) +
-  geom_line(alpha = 0.6, aes(color = avg_change)) +
-  scale_color_gradient2(low = "red", mid = "gray", high = "blue") +
-  theme_pubr() +
+make_paired_plot(categorized_error_df %>% filter(id != 11),
+  measure = "avg") +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
-    subtitle = "Excluding CSN011",
+    subtitle = "Only Increases in Average Error",
     x = "Event Category",
     y = "Avg Error"
   ) +
-  ylim(0, 5)
+  theme_classic2()
 ```
 
-![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-22-3.png)
+![](eyetracker_data_preprocessing_files/figure-markdown_github/unnamed-chunk-25-3.png)
+
+Playground
+----------
+
+Things in progress
+
+``` r
+make_pretty_df(
+  val_reval_changes_df %>%
+    filter(avg_error_val < 1.5 & avg_error_reval > 1.5)
+)
+```
+
+|   id|  avg\_error\_change|  max\_error\_change|  pix\_x\_offset\_change|  pix\_y\_offset\_change|  calibration|  validation|        task|  revalidation|  sttime\_val| quality\_val |  avg\_error\_val|  max\_error\_val|  deg\_offset\_val|  pix\_x\_offset\_val|  pix\_y\_offset\_val|  sttime\_reval| quality\_reval |  avg\_error\_reval|  max\_error\_reval|  deg\_offset\_reval|  pix\_x\_offset\_reval|  pix\_y\_offset\_reval|
+|----:|-------------------:|-------------------:|-----------------------:|-----------------------:|------------:|-----------:|-----------:|-------------:|------------:|:-------------|----------------:|----------------:|-----------------:|--------------------:|--------------------:|--------------:|:---------------|------------------:|------------------:|-------------------:|----------------------:|----------------------:|
+|   29|                0.55|                0.89|                    19.0|                    36.2|    2,218,926|   2,218,989|   2,463,750|     6,127,789|    2,409,855| FAIR         |             1.07|             1.30|              0.89|                -23.5|                 32.8|      6,150,941| POOR           |               1.62|               2.19|                1.44|                   -4.5|                   69.0|
+|   37|                0.79|                0.72|                    -2.6|                    47.9|    1,125,962|   1,126,029|   1,543,592|     5,183,215|    1,508,328| POOR         |             1.20|             4.92|              0.14|                 -2.5|                  4.7|      5,202,251| POOR           |               1.99|               5.64|                1.37|                   -5.1|                   52.6|
+|   55|                0.94|                2.56|                     2.5|                   -80.3|      875,562|     875,629|   1,150,236|     4,800,717|    1,091,738| GOOD         |             0.98|             1.40|              0.66|                 25.1|                  3.3|      4,819,370| POOR           |               1.92|               3.96|                1.76|                   27.6|                  -77.0|
+|   40|                1.02|                3.28|                   -27.5|                   -65.9|      875,946|     876,009|   1,191,434|     4,865,129|    1,116,535| FAIR         |             0.71|             1.62|              0.52|                 -7.2|                 19.1|      4,908,090| POOR           |               1.73|               4.90|                1.60|                  -34.7|                  -46.8|
+|   53|                1.10|                2.33|                    59.4|                    27.9|    8,528,702|   8,528,763|   8,732,690|    12,366,511|    8,646,308| GOOD         |             0.69|             1.46|              0.25|                 -0.5|                  9.3|     12,417,071| POOR           |               1.79|               3.79|                1.71|                   58.9|                   37.2|
+|   22|                1.14|                0.53|                     7.0|                   -90.9|    7,712,500|   7,712,561|   8,218,794|    11,867,887|    8,187,199| POOR         |             0.96|             2.04|              0.55|                 22.7|                  8.5|     11,887,950| POOR           |               2.10|               2.57|                2.02|                   29.7|                  -82.4|
+|   10|                1.25|                2.44|                   -48.2|                   -75.5|    1,653,320|   1,653,401|   2,587,336|     6,233,213|    2,526,494| POOR         |             0.84|             2.31|              0.37|                 13.5|                 -6.2|      6,253,298| POOR           |               2.09|               4.75|                1.89|                  -34.7|                  -81.7|
+|   36|                1.25|                1.26|                   -41.1|                   -47.9|    1,792,202|   1,792,271|   2,072,262|     5,724,843|    1,999,466| GOOD         |             0.56|             1.26|              0.35|                  8.6|                 -9.3|      5,758,481| POOR           |               1.81|               2.52|                1.76|                  -32.5|                  -57.2|
+|   33|                1.34|                1.59|                   -58.6|                   -23.1|    1,034,034|   1,034,097|   1,132,234|     4,785,533|    1,076,788| GOOD         |             0.49|             0.84|              0.26|                  0.3|                -11.9|      4,809,206| POOR           |               1.83|               2.43|                1.77|                  -58.3|                  -35.0|
+|   45|                1.40|               10.09|                    68.7|                    -3.5|    6,624,006|   6,624,071|   6,822,626|    10,454,109|    6,778,190| GOOD         |             0.19|             0.42|              0.05|                 -0.3|                 -2.4|     10,482,390| POOR           |               1.59|              10.51|                1.50|                   68.4|                   -5.9|
+|   15|                1.45|                2.32|                   -79.9|                   -15.0|      837,690|     837,753|   1,236,256|     4,874,541|    1,189,741| GOOD         |             0.75|             0.96|              0.51|                 -2.4|                 18.9|      4,895,318| POOR           |               2.20|               3.28|                2.12|                  -82.3|                    3.9|
+|   35|                1.48|                0.56|                   -83.9|                    -3.0|    1,925,192|   1,925,273|   2,138,940|     5,818,423|    2,077,112| FAIR         |             0.53|             1.81|              0.41|                  9.9|                 12.9|      5,839,338| POOR           |               2.01|               2.37|                1.91|                  -74.0|                    9.9|
+|   17|                1.48|                0.10|                   -67.2|                    47.2|   14,292,540|  14,292,591|  14,565,532|    18,224,701|   14,512,561| POOR         |             0.57|             2.54|              0.44|                  6.8|                 15.8|     18,246,979| POOR           |               2.05|               2.64|                1.98|                  -60.4|                   63.0|
+|   11|                3.86|               18.40|                   111.3|                   -83.4|    1,071,538|   1,071,611|   1,346,862|     5,061,997|    1,247,087| POOR         |             0.84|             3.07|              0.73|                 17.7|                -24.3|      5,083,297| POOR           |               4.70|              21.47|                4.29|                  129.0|                 -107.7|
