@@ -4,7 +4,7 @@ author: "Ari Dyckovsky"
 knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, 
                     encoding = encoding,
-                    output_dir = "../docs/notebooks") })
+                    output_dir = "../output/notebooks") })
 ---
 
 # Eyetracker Data Preprocessing
