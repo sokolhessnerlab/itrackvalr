@@ -1,0 +1,5 @@
+# Shared set of default options for knitted notebooks
+github_document:
+  html_preview: false
+  toc: true
+  toc_depth: 2

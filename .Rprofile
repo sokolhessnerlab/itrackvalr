@@ -48,3 +48,9 @@ options(
   prompt = "R > ", 
   continue = "... "
 )
+
+#### -- Dev Tools -- ####
+if (interactive()) {
+  library(fs)
+  library(devtools)
+}

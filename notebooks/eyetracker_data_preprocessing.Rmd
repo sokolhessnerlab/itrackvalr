@@ -1,9 +1,10 @@
 ---
 title: "Eyetracker Data Preprocessing"
 author: "Ari Dyckovsky"
-output:
-  md_document:
-    variant: markdown_github
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, 
+                    encoding = encoding,
+                    output_dir = "../docs/notebooks") })
 ---
 
 # Eyetracker Data Preprocessing
@@ -100,14 +101,11 @@ load_all_etd_by_filename_csv <-function(id_vector, filename_csv = sample_csv) {
 id_vector <- get_id_vector()
 ```
 
-## Load each data for all participants
+## Load each events and recordings CSV for all participants
 
 ```{r, message=FALSE}
 etd_events <- load_all_etd_by_filename_csv(id_vector, event_csv)
-etd_ioevents <- load_all_etd_by_filename_csv(id_vector, ioevent_csv)
 etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
-# TAKES A LOT OF TIME TO LOAD. UNCOMMENT IF WANTED.
-#etd_samples <- load_all_etd_by_filename_csv(id_vector, sample_csv)
 ```
 
 ### Events data methods using `edt_events` list
@@ -407,6 +405,10 @@ get_error_correlation_plot <- function(df, measure) {
     add.params = list(color = "blue", fill = "lightgray"),
     conf.int = TRUE
   ) +
+  xlim(0, 5) +
+  ylim(0, 5) +
+  coord_fixed(ratio = 1) +
+  geom_abline() +
   stat_cor(method = "pearson") +
   theme_classic2() +
   labs(
@@ -456,9 +458,7 @@ get_offset_boxplot <- function(df, group, measure) {
 ```
 
 ```{r}
-get_error_correlation_plot(val_reval_changes_df, "avg") + 
-  coord_fixed(ratio = 1) +
-  geom_abline()
+get_error_correlation_plot(val_reval_changes_df, "avg")
 ```
 
 
@@ -552,7 +552,7 @@ get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "di
 
 Create a categorized offset dataframe and then show and example of it.
 
-```{r}
+```{r, categorized-offset-dataframe}
 categorized_offset_df <- val_reval_changes_df %>%
   select(id, matches("pix"), -matches("change")) %>% # remove offset change columns
   pivot_longer(
@@ -577,7 +577,7 @@ make_pretty_df(
 
 Create a categorized error dataframe and then show an example of it.
 
-```{r}
+```{r, categorized-error-dataframe}
 categorized_error_df <- val_reval_changes_df %>%
   select(id, matches("error"), -matches("change")) %>% # remove offset change columns
   pivot_longer(
@@ -611,7 +611,7 @@ make_pretty_df(
 Plot the change in average error with gradient coloring for the slope
 of average error change.
 
-```{r}
+```{r, offset-change-paired-plots-method}
 make_paired_plot <- function(categorized_df, measure) {
   # requires a categorized dataframe, the category column selector, and measure (str)
   plt <- categorized_df %>%
@@ -625,7 +625,7 @@ make_paired_plot <- function(categorized_df, measure) {
 
 #### Offset changes
 
-```{r}
+```{r, offset-change-paired-plots}
 make_paired_plot(categorized_offset_df, 
   measure = "x") +
   labs(
@@ -692,6 +692,64 @@ make_paired_plot(categorized_error_df %>% filter(id != 11),
 
 ```
 
+## Load samples
+
+```{r, load-samples}
+subset_id_vector <- id_vector[1:5] # just for example since huge load time
+etd_samples <- load_all_etd_by_filename_csv(id_vector, sample_csv)
+```
+
+### Extract samples for task duration
+
+```{r, task-gaze-samples}
+FIXED_ID <- 39
+MILLISECONDS_PER_HOUR <- 3600000
+MILLISECONDS_PER_SECONDS <- 1000
+GX_SAMPLE_ERROR_VALUE <- 10^7
+GY_SAMPLE_ERROR_VALUE <- 10^7
+SCREEN_WIDTH_PX <- 1280
+SCREEN_HEIGHT_PX <- 1024
+SCREEN_BIN_WIDTH_PX <- 16
+SCREEN_CENTER_COORD <- c(SCREEN_WIDTH_PX / 2, SCREEN_HEIGHT_PX / 2)
+
+# get the task start time from recordings data embedded in cleaned
+# val_reval changes dataframe
+task_start_time <- val_reval_changes_df %>%
+  filter(id == FIXED_ID) %>%
+  pull(task)
+
+# Filter sample data per participant for the hour duration
+# from start to end of task, then translate and transform
+# frame of reference for time to start at 0 in seconds. Remove
+# all error values for gaze sample and plot
+task_gaze_df <- etd_samples[[FIXED_ID]] %>% 
+  filter(time >= task_start_time & time < task_start_time + MILLISECONDS_PER_HOUR) %>%
+  mutate(time = (time - time[[1]]) / MILLISECONDS_PER_SECONDS) %>%
+  filter(gx < GX_SAMPLE_ERROR_VALUE & gy < GY_SAMPLE_ERROR_VALUE)
+
+plt <- ggplot(task_gaze_df, aes(x = gx, y = gy)) +
+  xlim(0, SCREEN_WIDTH_PX) +
+  ylim(0, SCREEN_HEIGHT_PX) +
+  theme_minimal() +
+  labs(
+    title = str_glue("Heatmap of gaze samples across task duration for CSN{ str_pad(FIXED_ID, 3, pad = '0') }")
+  )
+
+# add clock circle in
+# flip all participants to same orientation (all left, or all right, but not both)
+
+# Validate translations for pixel offset, point by point
+# 1. clock on left
+# 2. Cut data from non-clock side/half
+# 3. Average distance from clock hand's tip per timestamp
+# 4. Offset of x,y from val/reval is the translation, use mean of two values for each orientation
+# 5. Compare distance from clock with and without correction by offset
+# 6. Worth looking at quartiles of average distance per participant
+# 7. Then plot average distance for each participant in a plot
+# 
+# See matlab task code to see where tip of clock hand is at every second
+plt + geom_bin2d(binwidth = c(SCREEN_BIN_WIDTH_PX, SCREEN_BIN_WIDTH_PX))
+```
 
 ## Playground
 
@@ -700,6 +758,14 @@ Things in progress
 ```{r}
 make_pretty_df(
   val_reval_changes_df %>%
-    filter(avg_error_val < 1.5 & avg_error_reval > 1.5)
+    filter(avg_error_val < 1.5 & avg_error_reval < 1.5)
 )
+```
+
+
+```{r}
+df <- val_reval_changes_df %>%
+    filter(avg_error_val < 2.5 & avg_error_reval < 2.5)
+
+t.test(df$avg_error_change, mu = 0)
 ```
