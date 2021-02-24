@@ -1,10 +1,6 @@
 ---
 title: "Eyetracker Data Preprocessing"
 author: "Ari Dyckovsky"
-knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, 
-                    encoding = encoding,
-                    output_dir = "../output/notebooks") })
 ---
 
 ```{r, notebook-options, include=FALSE}

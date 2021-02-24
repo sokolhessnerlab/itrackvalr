@@ -1,5 +1,5 @@
 # Shared set of default options for knitted notebooks
 md_document:
-  variant: markdown_github
+  variant: gfm
   toc: true
   toc_depth: 3
