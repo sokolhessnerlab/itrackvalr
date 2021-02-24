@@ -24,15 +24,20 @@ make_pretty_df <- function(df) {
     df
   }
 }
+
 ```
 
 ## Setup
 
-### Load packages
+### Load package with dependencies
 
 ```{r, packages}
-library(tidyverse)
-library(ggpubr)
+# Load csn package with devtools
+# Includes loading the following packages:
+#   - tidyverse
+#   - ggpubr
+library(devtools)
+load_all()
 ```
 
 ### File path definitions
