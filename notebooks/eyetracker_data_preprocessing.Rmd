@@ -7,9 +7,7 @@ knit: (function(inputFile, encoding) {
                     output_dir = "../output/notebooks") })
 ---
 
-# Eyetracker Data Preprocessing
-
-```{r, setup, include=FALSE}
+```{r, notebook-configuration, include=FALSE}
 knitr::opts_chunk$set(
   warning = FALSE,
   strip.white = TRUE,
@@ -18,20 +16,7 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
-```
 
-## Setup
-
-### Libraries
-
-```{r, libraries}
-library(tidyverse)
-library(ggpubr)
-```
-
-### Formatting
-
-```{r, formatting}
 make_pretty_df <- function(df) {
   if (isTRUE(getOption('knitr.in.progress'))) {
     knitr::kable(df, "simple", format.args = list(big.mark = ",", scientific = FALSE))
@@ -41,9 +26,18 @@ make_pretty_df <- function(df) {
 }
 ```
 
-## File path definitions
+## Setup
 
-```{r}
+### Load packages
+
+```{r, packages}
+library(tidyverse)
+library(ggpubr)
+```
+
+### File path definitions
+
+```{r, file-path-definitions}
 root_path <- "/Volumes/shlab/Projects/CSN"
 extracted_data_path <- "/data/extracted/eyetracker"
 event_csv <- "fevent.csv"
@@ -57,7 +51,7 @@ min_id <- 1
 max_id <- 57
 ```
 
-## Loading methods
+### Define loading methods for CSVs
 
 ```{r}
 get_path_to_id <- function(id) {
@@ -101,14 +95,16 @@ load_all_etd_by_filename_csv <-function(id_vector, filename_csv = sample_csv) {
 id_vector <- get_id_vector()
 ```
 
-## Load each events and recordings CSV for all participants
+### Load each CSV for all participants' events and recordings data
 
 ```{r, message=FALSE}
 etd_events <- load_all_etd_by_filename_csv(id_vector, event_csv)
 etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
 ```
 
-### Events data methods using `edt_events` list
+## Events data
+
+### Methods using `edt_events` list of loaded dataframes
 
 ```{r, events-data-methods}
 CALIBRATION_RESULT_MESSAGE <- "!CAL CALIBRATION HV9 R RIGHT"
@@ -206,7 +202,9 @@ make_pretty_df(
 )
 ```
 
-### Recordings data methods using `etd_recordings` list
+## Recordings data
+
+### Methods using `edt_recordings` list of loaded dataframes
 
 ```{r, recordings-data-methods}
 get_duration <- function(id) {
@@ -266,7 +264,9 @@ recording_time_df_minutes <- get_recording_time_df(id_vector, 1000 * 60)
 sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3600)
 ```
 
-## Joint data methods
+## Evaluate validation and revalidation quality
+
+### Methods to create validation and revalidation dataframes
 
 ```{r, joint-data-methods}
 get_val_reval_by_id <- function(recording_time_df, i) {
@@ -330,7 +330,7 @@ get_recording_and_val_reval_df <- function(recording_time_df, all_val_reval_df) 
 }
 ```
 
-### Combine recording times with significant event details per participant
+#### Combine recording times with significant event details per participant
 
 ```{r, combine-recording-events, message=FALSE}
 recording_time_df <- get_recording_time_df(id_vector)
@@ -692,7 +692,7 @@ make_paired_plot(categorized_error_df %>% filter(id != 11),
 
 ```
 
-## Load samples
+## Samples data
 
 ```{r, load-samples}
 subset_id_vector <- id_vector[1:5] # just for example since huge load time

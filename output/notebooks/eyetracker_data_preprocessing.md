@@ -2,40 +2,47 @@ Eyetracker Data Preprocessing
 ================
 Ari Dyckovsky
 
-  - [Eyetracker Data Preprocessing](#eyetracker-data-preprocessing)
-      - [Setup](#setup)
+  - [Setup](#setup)
+      - [Load packages](#load-packages)
       - [File path definitions](#file-path-definitions)
-      - [Loading methods](#loading-methods)
-      - [Load each events and recordings CSV for all
-        participants](#load-each-events-and-recordings-csv-for-all-participants)
-      - [Joint data methods](#joint-data-methods)
-      - [Load samples](#load-samples)
-      - [Playground](#playground)
-
-# Eyetracker Data Preprocessing
+      - [Define loading methods for
+        CSVs](#define-loading-methods-for-csvs)
+      - [Load each CSV for all participants’ events and recordings
+        data](#load-each-csv-for-all-participants-events-and-recordings-data)
+  - [Events data](#events-data)
+      - [Methods using `edt_events` list of loaded
+        dataframes](#methods-using-edt_events-list-of-loaded-dataframes)
+  - [Recordings data](#recordings-data)
+      - [Methods using `edt_recordings` list of loaded
+        dataframes](#methods-using-edt_recordings-list-of-loaded-dataframes)
+      - [Look at recording times](#look-at-recording-times)
+  - [Evaluate validation and revalidation
+    quality](#evaluate-validation-and-revalidation-quality)
+      - [Methods to create validation and revalidation
+        dataframes](#methods-to-create-validation-and-revalidation-dataframes)
+      - [Correlation tests for `avg_error` and
+        `max_error`](#correlation-tests-for-avg_error-and-max_error)
+      - [Methods for correlation plots](#methods-for-correlation-plots)
+      - [Paired samples tests for x,y pixel
+        offsets](#paired-samples-tests-for-xy-pixel-offsets)
+      - [Paired Plots](#paired-plots)
+      - [Paired plots for validation-revalidation
+        changes](#paired-plots-for-validation-revalidation-changes)
+  - [Samples data](#samples-data)
+      - [Extract samples for task
+        duration](#extract-samples-for-task-duration)
+  - [Playground](#playground)
 
 ## Setup
 
-### Libraries
+### Load packages
 
 ``` r
 library(tidyverse)
 library(ggpubr)
 ```
 
-### Formatting
-
-``` r
-make_pretty_df <- function(df) {
-  if (isTRUE(getOption('knitr.in.progress'))) {
-    knitr::kable(df, "simple", format.args = list(big.mark = ",", scientific = FALSE))
-  } else {
-    df
-  }
-}
-```
-
-## File path definitions
+### File path definitions
 
 ``` r
 root_path <- "/Volumes/shlab/Projects/CSN"
@@ -51,7 +58,7 @@ min_id <- 1
 max_id <- 57
 ```
 
-## Loading methods
+### Define loading methods for CSVs
 
 ``` r
 get_path_to_id <- function(id) {
@@ -95,14 +102,16 @@ load_all_etd_by_filename_csv <-function(id_vector, filename_csv = sample_csv) {
 id_vector <- get_id_vector()
 ```
 
-## Load each events and recordings CSV for all participants
+### Load each CSV for all participants’ events and recordings data
 
 ``` r
 etd_events <- load_all_etd_by_filename_csv(id_vector, event_csv)
 etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
 ```
 
-### Events data methods using `edt_events` list
+## Events data
+
+### Methods using `edt_events` list of loaded dataframes
 
 ``` r
 CALIBRATION_RESULT_MESSAGE <- "!CAL CALIBRATION HV9 R RIGHT"
@@ -207,7 +216,9 @@ make_pretty_df(
 | 6,231,071 | VALIDATION  | GOOD    |       0.85 |       1.13 |        0.70 |          \-3.6 |           32.7 | \!CAL VALIDATION HV9 R RIGHT GOOD ERROR 0.85 avg. 1.13 max OFFSET 0.70 deg. -3.6,32.7 pix.  |
 | 6,269,103 | VALIDATION  | GOOD    |       0.82 |       1.03 |        0.64 |         \-20.0 |           21.0 | \!CAL VALIDATION HV9 R RIGHT GOOD ERROR 0.82 avg. 1.03 max OFFSET 0.64 deg. -20.0,21.0 pix. |
 
-### Recordings data methods using `etd_recordings` list
+## Recordings data
+
+### Methods using `edt_recordings` list of loaded dataframes
 
 ``` r
 get_duration <- function(id) {
@@ -277,7 +288,9 @@ sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3
     ## [37]  84.351  95.241  99.463 113.003 115.135 116.207 135.669 139.489 145.689
     ## [46] 155.581 212.885 240.137 263.149
 
-## Joint data methods
+## Evaluate validation and revalidation quality
+
+### Methods to create validation and revalidation dataframes
 
 ``` r
 get_val_reval_by_id <- function(recording_time_df, i) {
@@ -341,7 +354,7 @@ get_recording_and_val_reval_df <- function(recording_time_df, all_val_reval_df) 
 }
 ```
 
-### Combine recording times with significant event details per participant
+#### Combine recording times with significant event details per participant
 
 ``` r
 recording_time_df <- get_recording_time_df(id_vector)
@@ -525,13 +538,13 @@ get_offset_boxplot <- function(df, group, measure) {
 get_error_correlation_plot(val_reval_changes_df, "avg")
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 get_error_correlation_plot(val_reval_changes_df, "max")
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ### Paired samples tests for x,y pixel offsets
 
@@ -625,7 +638,7 @@ wilcox.test(
 get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "x")
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 #### Paired samples t-test for y offset
 
@@ -653,7 +666,7 @@ t.test(
 get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "y")
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 #### Paired samples Wilcoxon test for distance
 
@@ -676,7 +689,7 @@ wilcox.test(
 get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "distance")
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ### Paired Plots
 
@@ -802,7 +815,7 @@ make_paired_plot(categorized_offset_df,
   theme_classic2()
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/offset-change-paired-plots-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/offset-change-paired-plots-1.png)<!-- -->
 
 ``` r
 make_paired_plot(categorized_offset_df, 
@@ -816,7 +829,7 @@ make_paired_plot(categorized_offset_df,
   theme_classic2()
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/offset-change-paired-plots-2.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/offset-change-paired-plots-2.png)<!-- -->
 
 ``` r
 make_paired_plot(categorized_offset_df, 
@@ -830,7 +843,7 @@ make_paired_plot(categorized_offset_df,
   theme_classic2()
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/offset-change-paired-plots-3.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/offset-change-paired-plots-3.png)<!-- -->
 
 #### Average error changes
 
@@ -846,7 +859,7 @@ make_paired_plot(categorized_error_df %>% filter(avg_change < 0),
   theme_classic2()
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 ``` r
 make_paired_plot(categorized_error_df %>% filter(avg_change > 0),
@@ -860,7 +873,7 @@ make_paired_plot(categorized_error_df %>% filter(avg_change > 0),
   theme_classic2()
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-21-2.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
 
 ``` r
 make_paired_plot(categorized_error_df %>% filter(id != 11),
@@ -874,9 +887,9 @@ make_paired_plot(categorized_error_df %>% filter(id != 11),
   theme_classic2()
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-21-3.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-20-3.png)<!-- -->
 
-## Load samples
+## Samples data
 
 ``` r
 subset_id_vector <- id_vector[1:5] # just for example since huge load time
@@ -935,7 +948,7 @@ plt <- ggplot(task_gaze_df, aes(x = gx, y = gy)) +
 plt + geom_bin2d(binwidth = c(SCREEN_BIN_WIDTH_PX, SCREEN_BIN_WIDTH_PX))
 ```
 
-![](/Users/metis/Projects/shlab/csn/docs/notebooks/eyetracker_data_preprocessing_files/figure-gfm/task-gaze-samples-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/task-gaze-samples-1.png)<!-- -->
 
 ## Playground
 
