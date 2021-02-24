@@ -7,11 +7,10 @@ knit: (function(inputFile, encoding) {
                     output_dir = "../output/notebooks") })
 ---
 
-```{r, notebook-configuration, include=FALSE}
+```{r, notebook-options, include=FALSE}
 knitr::opts_chunk$set(
   warning = FALSE,
   strip.white = TRUE,
-  #tidy = TRUE,
   highlight = TRUE,
   warning = FALSE,
   message = FALSE
@@ -24,72 +23,121 @@ make_pretty_df <- function(df) {
     df
   }
 }
-
 ```
 
 ## Setup
 
+This notebook requires that the following chunks are run before any other section
+chunks can resolve. Please complete the following in order:
+
+1. Load the package interface with its dependencies,
+2. Load the configuration settings,
+3. Set file paths,
+4. Set participant identification settings.
+
 ### Load package with dependencies
 
-```{r, packages}
+```{r, load-packages}
 # Load csn package with devtools
-# Includes loading the following packages:
-#   - tidyverse
-#   - ggpubr
 library(devtools)
 load_all()
+
+# Load dependencies
+library(tidyverse)
+library(ggpubr)
+```
+
+### Load configuration settings
+
+We use a configuration file called `config.yml` to handle environment settings,
+such as the absolute path to data and subdirectories by type of data (i.e., "raw")
+and participant identification details (i.e., the prefix "CSN"). For more information
+on how to use configurable environment settings, see [this introduction vignette](https://cran.r-project.org/web/packages/config/vignettes/introduction.html).
+
+```{r, load-config}
+config <- config::get()
 ```
 
 ### File path definitions
 
-```{r, file-path-definitions}
-root_path <- "/Volumes/shlab/Projects/CSN"
-extracted_data_path <- "/data/extracted/eyetracker"
-event_csv <- "fevent.csv"
-sample_csv <- "fsample.csv"
-ioevent_csv <- "ioevent.csv"
-recordings_csv <- "recordings.csv"
+File path definitions are set using configured environment settings from
+the `config.yml` file. (Note: overrides of configured settings should occur
+within the YAML text file, usually via a new environment that inherits
+defaults other than explicit overrides).
 
-id_prefix <- "CSN"
-id_length <- 3
-min_id <- 1
-max_id <- 57
+```{r, file-path-definitions}
+# Top level data path for entry
+data_path <- config$path$data
+
+# Extracted data subdirectory path
+extracted_data_path <- file.path(data_path, 
+                                 config$path$extracted)
+
+# Extracted eyetracker data subdirectory path
+extracted_eyetracker_data_path <- file.path(extracted_data_path, 
+                                            config$path$eyetracker)
+
+# Extracted eyetracker data file names (to CSV, from MAT)
+event_csv <- config$extracted_files$eyetracker_event_csv
+sample_csv <- config$extracted_files$eyetracker_sample_csv
+ioevent_csv <- config$extracted_files$eyetracker_ioevent_csv
+recordings_csv <- config$extracted_files$eyetracker_recordings_csv
 ```
+
+### Participant identification settings
+
+Participant identification settings are also use configured environment settings from
+the `config.yml` file.
+
+```{r, participant-id-settings}
+# Participant id settings
+participant_id_prefix <- config$participant_id$prefix
+participant_id_pad_length <- config$participant_id$pad_length
+participant_id_pad_character <- config$participant_id$pad_character
+participant_id_min <- config$participant_id$min
+participant_id_max <- config$participant_id$max
+```
+
+## Load extracted data
 
 ### Define loading methods for CSVs
 
 ```{r}
-get_path_to_id <- function(id) {
-  padded_id <- stringr::str_pad(id, 3, pad = "0")
-  participant_id <- stringr::str_c(id_prefix, padded_id)
+min_id <- participant_id_min
+max_id <- participant_id_max
+
+get_path_to_id <- function(path_to_dir, id) {
+  padded_id <- stringr::str_pad(id, 
+                                participant_id_pad_length, 
+                                pad = participant_id_pad_character)
+  participant_id <- stringr::str_c(participant_id_prefix, padded_id)
   return (
     file.path(
-      root_path, 
-      extracted_data_path, 
+      path_to_dir, 
       participant_id
     )
   )
 }
 
-get_id_vector <- function() {
+get_id_vector <- function(path_to_dir) {
   # Gets a vector of id integers for participants relative
   # to the existence of that participant's data (some participants
   # are not converted from raw MAT data to CSVs if not considered
   # a complete participant)
   id_vector <- c()
   for (i in min_id:max_id) {
-    if ( dir.exists(get_path_to_id(i)) ) {
+    if ( dir.exists(get_path_to_id(path_to_dir, i)) ) {
       id_vector <- c(id_vector, i)
     }
   }
   return (id_vector)
 }
 
-load_all_etd_by_filename_csv <-function(id_vector, filename_csv = sample_csv) {
+load_all_etd_by_filename_csv <-function(path_to_dir, id_vector, filename_csv = sample_csv) {
   # Loads all eyetracking data of given filename across participants
   etd_list <- list()
   for (id in id_vector) {
-    path_to_etd <- file.path(get_path_to_id(id), filename_csv)
+    path_to_etd <- file.path(get_path_to_id(path_to_dir, id), filename_csv)
     etd_list[[id]] <- readr::read_csv(path_to_etd)
   }
   return (etd_list)
@@ -97,14 +145,15 @@ load_all_etd_by_filename_csv <-function(id_vector, filename_csv = sample_csv) {
 
 # Convenience instantiation of the id vector for later use. Can use
 # the getter method at any point for same output.
-id_vector <- get_id_vector()
+id_vector <- get_id_vector(extracted_eyetracker_data_path)
 ```
 
 ### Load each CSV for all participants' events and recordings data
 
 ```{r, message=FALSE}
-etd_events <- load_all_etd_by_filename_csv(id_vector, event_csv)
-etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
+etd_events <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, event_csv)
+etd_recordings <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, recordings_csv)
+etd_samples <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, sample_csv)
 ```
 
 ## Events data
@@ -200,8 +249,9 @@ get_event_messages <- function(participant_events) {
 }
 ```
 
-```{r}
-# Output a single participant's important calibration/validation info
+Output of a single participant's calibration/validation event data.
+
+```{r, calibration-validation-event-data-example}
 make_pretty_df(
   get_event_messages(etd_events[[5]])
 )
@@ -262,7 +312,7 @@ get_recording_time_df <- function(id_vector, dimensional_reducer = 1) {
 
 Can retrieve all recording moments across participants by seconds or minutes. In seconds, the difference between revalidation and task time, then subtracting 3600, provides an idea of how much "overtime" the task went.
 
-```{r}
+```{r, look-at-recording-times}
 recording_time_df_seconds <- get_recording_time_df(id_vector, 1000)
 recording_time_df_minutes <- get_recording_time_df(id_vector, 1000 * 60)
 
@@ -354,7 +404,7 @@ make_pretty_df(
 
 Mutate to get change in average error, max error, and pixel offsets. 
 
-```{r}
+```{r, validation-revaliation-changes-dataframe}
 val_reval_changes_df <- recording_and_val_reval_df %>%
     mutate(
       avg_error_change = avg_error_reval - avg_error_val,
@@ -366,7 +416,7 @@ val_reval_changes_df <- recording_and_val_reval_df %>%
     arrange(abs(avg_error_change))
 
 make_pretty_df(
-  tail(val_reval_changes_df, 10)
+  val_reval_changes_df
 )
 ```
 
@@ -375,7 +425,7 @@ make_pretty_df(
 Compare the average error between validation and revalidation across
 participants using a Pearson's product-moment correlation. Do the same for max error.
 
-```{r}
+```{r, avg-max-error-corr-tests}
 low_avg_error_df <- val_reval_changes_df %>%
   filter(avg_error_change < 7)
 
@@ -399,7 +449,7 @@ max_error_corr
 
 ### Methods for correlation plots
 
-```{r}
+```{r,corr-plot-methods}
 get_error_correlation_plot <- function(df, measure) {
   
   ggscatter(
@@ -410,8 +460,6 @@ get_error_correlation_plot <- function(df, measure) {
     add.params = list(color = "blue", fill = "lightgray"),
     conf.int = TRUE
   ) +
-  xlim(0, 5) +
-  ylim(0, 5) +
   coord_fixed(ratio = 1) +
   geom_abline() +
   stat_cor(method = "pearson") +
@@ -462,20 +510,20 @@ get_offset_boxplot <- function(df, group, measure) {
 
 ```
 
-```{r}
+```{r, avg-error-corr-plot}
 get_error_correlation_plot(val_reval_changes_df, "avg")
 ```
 
 
-```{r}
+```{r, max-error-corr-plot}
 get_error_correlation_plot(val_reval_changes_df, "max")
 ```
 
-### Paired samples tests for x,y pixel offsets
+### Categorized dataframes by validation and revalidation conditions
 
-Create a categorized offset dataframe to use in boxplots.
+Create a categorized offset dataframe and then show and example of it.
 
-```{r}
+```{r, categorized-offset-dataframe}
 categorized_offset_df <- val_reval_changes_df %>%
   select(id, matches("pix"), -matches("change")) %>% # remove offset change columns
   pivot_longer(
@@ -483,11 +531,49 @@ categorized_offset_df <- val_reval_changes_df %>%
     names_to = c(".value", "category"),
     names_pattern = "pix_(.)_offset_(.*)"
   ) %>%
+  group_by(id) %>%
   mutate(
     distance = sqrt(x^2 + y^2)
+  ) %>%
+  mutate(
+    x_change = x[category == "reval"] - x[category == "val"],
+    y_change = y[category == "reval"] - y[category == "val"],
+    distance_change = distance[category == "reval"] - distance[category == "val"]
   )
+
 make_pretty_df(
   head(categorized_offset_df)
+)
+```
+
+Create a categorized error dataframe and then show an example of it.
+
+```{r, categorized-error-dataframe}
+categorized_error_df <- val_reval_changes_df %>%
+  select(id, matches("error"), -matches("change")) %>% # remove offset change columns
+  pivot_longer(
+    cols = -c(id), # don't select for id
+    names_to = c(".value", "category"),
+    names_pattern = "(.*)_error_(.*)"
+  ) %>%
+  group_by(id) %>%
+  mutate(
+    avg_change = avg[category == "reval"] - avg[category == "val"],
+    max_change = max[category == "reval"] - max[category == "val"]
+  )
+
+make_pretty_df(
+  head(categorized_error_df)
+)
+```
+
+Look at the participants who have decreasing average errors over the course
+of the task.
+
+```{r}
+make_pretty_df(
+  categorized_error_df %>%
+    filter(avg_change < 0)
 )
 ```
 
@@ -555,62 +641,6 @@ get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "di
 
 ### Paired Plots
 
-Create a categorized offset dataframe and then show and example of it.
-
-```{r, categorized-offset-dataframe}
-categorized_offset_df <- val_reval_changes_df %>%
-  select(id, matches("pix"), -matches("change")) %>% # remove offset change columns
-  pivot_longer(
-    cols = -c(id), # don't select for id
-    names_to = c(".value", "category"),
-    names_pattern = "pix_(.)_offset_(.*)"
-  ) %>%
-  group_by(id) %>%
-  mutate(
-    distance = sqrt(x^2 + y^2)
-  ) %>%
-  mutate(
-    x_change = x[category == "reval"] - x[category == "val"],
-    y_change = y[category == "reval"] - y[category == "val"],
-    distance_change = distance[category == "reval"] - distance[category == "val"]
-  )
-
-make_pretty_df(
-  head(categorized_offset_df)
-)
-```
-
-Create a categorized error dataframe and then show an example of it.
-
-```{r, categorized-error-dataframe}
-categorized_error_df <- val_reval_changes_df %>%
-  select(id, matches("error"), -matches("change")) %>% # remove offset change columns
-  pivot_longer(
-    cols = -c(id), # don't select for id
-    names_to = c(".value", "category"),
-    names_pattern = "(.*)_error_(.*)"
-  ) %>%
-  group_by(id) %>%
-  mutate(
-    avg_change = avg[category == "reval"] - avg[category == "val"],
-    max_change = max[category == "reval"] - max[category == "val"]
-  )
-
-make_pretty_df(
-  head(categorized_error_df)
-)
-```
-
-Look at the participants who have decreasing average errors over the course
-of the task.
-
-```{r}
-make_pretty_df(
-  categorized_error_df %>%
-    filter(avg_change < 0)
-)
-```
-
 ### Paired plots for validation-revalidation changes
 
 Plot the change in average error with gradient coloring for the slope
@@ -664,7 +694,7 @@ make_paired_plot(categorized_offset_df,
 
 #### Average error changes
 
-```{r}
+```{r, error-change-paired-plot}
 make_paired_plot(categorized_error_df %>% filter(avg_change < 0),
   measure = "avg") +
   labs(
@@ -699,15 +729,16 @@ make_paired_plot(categorized_error_df %>% filter(id != 11),
 
 ## Samples data
 
-```{r, load-samples}
-subset_id_vector <- id_vector[1:5] # just for example since huge load time
-etd_samples <- load_all_etd_by_filename_csv(id_vector, sample_csv)
+```{r, preview-sample}
+make_pretty_df(
+  head(etd_samples[[4]], 20)
+)
 ```
 
 ### Extract samples for task duration
 
 ```{r, task-gaze-samples}
-FIXED_ID <- 39
+FIXED_ID <- 4
 MILLISECONDS_PER_HOUR <- 3600000
 MILLISECONDS_PER_SECONDS <- 1000
 GX_SAMPLE_ERROR_VALUE <- 10^7
@@ -733,8 +764,8 @@ task_gaze_df <- etd_samples[[FIXED_ID]] %>%
   filter(gx < GX_SAMPLE_ERROR_VALUE & gy < GY_SAMPLE_ERROR_VALUE)
 
 plt <- ggplot(task_gaze_df, aes(x = gx, y = gy)) +
-  xlim(0, SCREEN_WIDTH_PX) +
-  ylim(0, SCREEN_HEIGHT_PX) +
+  #xlim(0, SCREEN_WIDTH_PX) +
+  #ylim(0, SCREEN_HEIGHT_PX) +
   theme_minimal() +
   labs(
     title = str_glue("Heatmap of gaze samples across task duration for CSN{ str_pad(FIXED_ID, 3, pad = '0') }")

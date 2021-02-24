@@ -2,11 +2,16 @@ Package: csn
 Title: An R Interface to Analyze Value-Based Gaze Experiments
 Version: 0.1.0
 Authors@R: 
-    person(given = "Ari",
+    c(person(given = "Ari",
            family = "Dyckovsky",
            role = c("aut", "cre"),
            email = "aridyckovsky@gmail.com",
-           comment = c(ORCID = "0000-0002-3588-5043"))
+           comment = c(ORCID = "0000-0002-3588-5043")),
+      person(given = "Peter",
+           family = "Sokol-Hessner",
+           role = c("aut"),
+           email = "hessner@gmail.com",
+           comment = c(ORCID = "0000-0003-0895-5576")))
 Description: This interface provides a set of methods to analyze
     data for value-based gaze experiments.
 License: MIT + file LICENSE
@@ -15,6 +20,7 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Imports:
+    config,
     tidyverse,
     ggpubr,
     magrittr

@@ -1,0 +1,20 @@
+default:
+  path:
+    data: "/Volumes/shlab/Projects/CSN/data"
+    extracted: "extracted"
+    raw: "raw"
+    clean: "clean"
+    eyetracker: "eyetracker"
+    behavioral: "behavioral"
+    questionnaire: "questionnaire"
+  extracted_files:
+    eyetracker_ioevent_csv: "ioevent.csv"
+    eyetracker_recordings_csv: "recordings.csv"
+    eyetracker_event_csv: "fevent.csv"
+    eyetracker_sample_csv: "fsample.csv"
+  participant_id:
+    prefix: "CSN"
+    pad_character: "0"
+    pad_length: 3
+    min: 1
+    max: 57
