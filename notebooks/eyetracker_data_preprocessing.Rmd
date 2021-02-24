@@ -104,7 +104,7 @@ etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
 
 ## Events data
 
-### Methods using `edt_events` list of loaded dataframes
+### Methods using `etd_events` list of loaded dataframes
 
 ```{r, events-data-methods}
 CALIBRATION_RESULT_MESSAGE <- "!CAL CALIBRATION HV9 R RIGHT"
@@ -204,7 +204,7 @@ make_pretty_df(
 
 ## Recordings data
 
-### Methods using `edt_recordings` list of loaded dataframes
+### Methods using `etd_recordings` list of loaded dataframes
 
 ```{r, recordings-data-methods}
 get_duration <- function(id) {

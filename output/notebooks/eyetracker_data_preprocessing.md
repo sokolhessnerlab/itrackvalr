@@ -10,11 +10,11 @@ Ari Dyckovsky
       - [Load each CSV for all participants’ events and recordings
         data](#load-each-csv-for-all-participants-events-and-recordings-data)
   - [Events data](#events-data)
-      - [Methods using `edt_events` list of loaded
-        dataframes](#methods-using-edt_events-list-of-loaded-dataframes)
+      - [Methods using `etd_events` list of loaded
+        dataframes](#methods-using-etd_events-list-of-loaded-dataframes)
   - [Recordings data](#recordings-data)
-      - [Methods using `edt_recordings` list of loaded
-        dataframes](#methods-using-edt_recordings-list-of-loaded-dataframes)
+      - [Methods using `etd_recordings` list of loaded
+        dataframes](#methods-using-etd_recordings-list-of-loaded-dataframes)
       - [Look at recording times](#look-at-recording-times)
   - [Evaluate validation and revalidation
     quality](#evaluate-validation-and-revalidation-quality)
@@ -111,7 +111,7 @@ etd_recordings <- load_all_etd_by_filename_csv(id_vector, recordings_csv)
 
 ## Events data
 
-### Methods using `edt_events` list of loaded dataframes
+### Methods using `etd_events` list of loaded dataframes
 
 ``` r
 CALIBRATION_RESULT_MESSAGE <- "!CAL CALIBRATION HV9 R RIGHT"
@@ -218,7 +218,7 @@ make_pretty_df(
 
 ## Recordings data
 
-### Methods using `edt_recordings` list of loaded dataframes
+### Methods using `etd_recordings` list of loaded dataframes
 
 ``` r
 get_duration <- function(id) {
