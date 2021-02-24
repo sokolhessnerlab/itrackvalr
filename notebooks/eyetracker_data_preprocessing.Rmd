@@ -102,7 +102,7 @@ participant_id_max <- config$participant_id$max
 
 ### Define loading methods for CSVs
 
-```{r}
+```{r, define-loading-methods}
 min_id <- participant_id_min
 max_id <- participant_id_max
 
@@ -148,9 +148,12 @@ load_all_etd_by_filename_csv <-function(path_to_dir, id_vector, filename_csv = s
 id_vector <- get_id_vector(extracted_eyetracker_data_path)
 ```
 
-### Load each CSV for all participants' events and recordings data
+### Load data for each participant
 
-```{r, message=FALSE}
+The following chunk loads CSVs for participants' event, recordings, and sample data
+and then assigns a list of these loaded dataframes to the approriate `etd_*` variable.
+
+```{r, load-dataframe-lists, message=FALSE}
 etd_events <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, event_csv)
 etd_recordings <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, recordings_csv)
 etd_samples <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, sample_csv)

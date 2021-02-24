@@ -12,8 +12,8 @@ Ari Dyckovsky
   - [Load extracted data](#load-extracted-data)
       - [Define loading methods for
         CSVs](#define-loading-methods-for-csvs)
-      - [Load each CSV for all participants’ events and recordings
-        data](#load-each-csv-for-all-participants-events-and-recordings-data)
+      - [Load data for each
+        participant](#load-data-for-each-participant)
   - [Events data](#events-data)
       - [Methods using `etd_events` list of loaded
         dataframes](#methods-using-etd_events-list-of-loaded-dataframes)
@@ -164,7 +164,11 @@ load_all_etd_by_filename_csv <-function(path_to_dir, id_vector, filename_csv = s
 id_vector <- get_id_vector(extracted_eyetracker_data_path)
 ```
 
-### Load each CSV for all participants’ events and recordings data
+### Load data for each participant
+
+The following chunk loads CSVs for participants’ event, recordings, and
+sample data and then assigns a list of these loaded dataframes to the
+approriate `etd_*` variable.
 
 ``` r
 etd_events <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, event_csv)
@@ -803,7 +807,7 @@ wilcox.test(
 get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "x")
 ```
 
-![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 #### Paired samples t-test for y offset
 
@@ -831,7 +835,7 @@ t.test(
 get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "y")
 ```
 
-![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 #### Paired samples Wilcoxon test for distance
 
@@ -854,7 +858,7 @@ wilcox.test(
 get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "distance")
 ```
 
-![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](/Users/metis/Projects/shlab/csn/output/notebooks/eyetracker_data_preprocessing_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ### Paired Plots
 
