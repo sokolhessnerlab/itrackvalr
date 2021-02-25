@@ -1,3 +1,7 @@
+Eyetracker Data Preprocessing
+================
+Ari Dyckovsky
+
   - [Setup](#setup)
       - [Load package with
         dependencies](#load-package-with-dependencies)
