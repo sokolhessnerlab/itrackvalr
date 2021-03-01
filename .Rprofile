@@ -6,7 +6,7 @@ if(.Platform$OS.type == "windows") {
 } else {
   options(
     download.file.method = "libcurl"
-  ) 
+  )
 }
 options(
   repos=c("https://cran.rstudio.com/")
@@ -21,7 +21,7 @@ options(
 options(
   digits = 12, # number of significant digits to show by default
   width = 80 # console width
-) 
+)
 
 #### -- Time Zone -- ####
 if (Sys.getenv("TZ") == "") Sys.setenv("TZ" = Sys.timezone())
@@ -45,9 +45,14 @@ if (interactive()) {
 }
 
 options(
-  prompt = "R > ", 
+  prompt = "R > ",
   continue = "... "
 )
+
+if (interactive()) {
+  # Command: Sys.getenv("R_CONFIG_ACTIVE") to get user value
+  Sys.setenv(R_CONFIG_ACTIVE = Sys.info()["user"])
+}
 
 #### -- Dev Tools -- ####
 if (interactive()) {

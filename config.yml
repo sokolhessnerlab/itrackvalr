@@ -18,3 +18,12 @@ default:
     pad_length: 3
     min: 1
     max: 57
+
+# Ari's Macbook System User
+metis:
+  inherits: default
+
+# Peter's Macbook System User
+# TODO:
+# user:
+#   inherits: default
