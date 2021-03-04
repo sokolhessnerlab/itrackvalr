@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 
 make_pretty_df <- function(df) {
-  if (isTRUE(getOption('knitr.in.progress'))) {
+  if (isTRUE(getOption("knitr.in.progress"))) {
     knitr::kable(df, "simple", format.args = list(big.mark = ",", scientific = FALSE))
   } else {
     df
@@ -66,12 +66,16 @@ defaults other than explicit overrides).
 data_path <- config$path$data
 
 # Extracted data subdirectory path
-extracted_data_path <- file.path(data_path, 
-                                 config$path$extracted)
+extracted_data_path <- file.path(
+  data_path,
+  config$path$extracted
+)
 
 # Extracted eyetracker data subdirectory path
-extracted_eyetracker_data_path <- file.path(extracted_data_path, 
-                                            config$path$eyetracker)
+extracted_eyetracker_data_path <- file.path(
+  extracted_data_path,
+  config$path$eyetracker
+)
 
 # Extracted eyetracker data file names (to CSV, from MAT)
 event_csv <- config$extracted_files$eyetracker_event_csv
@@ -103,13 +107,14 @@ min_id <- participant_id_min
 max_id <- participant_id_max
 
 get_path_to_id <- function(path_to_dir, id) {
-  padded_id <- stringr::str_pad(id, 
-                                participant_id_pad_length, 
-                                pad = participant_id_pad_character)
+  padded_id <- stringr::str_pad(id,
+    participant_id_pad_length,
+    pad = participant_id_pad_character
+  )
   participant_id <- stringr::str_c(participant_id_prefix, padded_id)
-  return (
+  return(
     file.path(
-      path_to_dir, 
+      path_to_dir,
       participant_id
     )
   )
@@ -122,21 +127,21 @@ get_id_vector <- function(path_to_dir) {
   # a complete participant)
   id_vector <- c()
   for (i in min_id:max_id) {
-    if ( dir.exists(get_path_to_id(path_to_dir, i)) ) {
+    if (dir.exists(get_path_to_id(path_to_dir, i))) {
       id_vector <- c(id_vector, i)
     }
   }
-  return (id_vector)
+  return(id_vector)
 }
 
-load_all_etd_by_filename_csv <-function(path_to_dir, id_vector, filename_csv = sample_csv) {
+load_all_etd_by_filename_csv <- function(path_to_dir, id_vector, filename_csv = sample_csv) {
   # Loads all eyetracking data of given filename across participants
   etd_list <- list()
   for (id in id_vector) {
     path_to_etd <- file.path(get_path_to_id(path_to_dir, id), filename_csv)
     etd_list[[id]] <- readr::read_csv(path_to_etd)
   }
-  return (etd_list)
+  return(etd_list)
 }
 
 # Convenience instantiation of the id vector for later use. Can use
@@ -208,16 +213,16 @@ get_pix_offset_from_message <- function(message) {
 
 get_event_messages <- function(participant_events) {
   # Get the significant event messages for a single participant
-  # events data by sttime, producing the extracted rows and columns 
+  # events data by sttime, producing the extracted rows and columns
   # from message contents.
-  
+
   if ("df" %in% ls()) rm("df")
-  
+
   # Select desired columns and remove white space around message
   df <- participant_events %>%
     select(message, sttime) %>%
-    transmute(message = str_squish(str_trim(message)), sttime = sttime) 
-  
+    transmute(message = str_squish(str_trim(message)), sttime = sttime)
+
   # Extract rows from categorized event result messages
   df <- df %>%
     filter(str_detect(message, CALIBRATION_RESULT_MESSAGE) | str_detect(message, VALIDATION_RESULT_MESSAGE)) %>%
@@ -228,23 +233,22 @@ get_event_messages <- function(participant_events) {
       max_error = get_max_error_from_message(message),
       deg_offset = get_deg_offset_from_message(message),
       pix_offset = get_pix_offset_from_message(message)
-    ) 
-  
+    )
+
   # Extract columns for pixel offsets of x,y coordinates
   df <- df %>%
     separate(pix_offset, c("pix_x_offset", "pix_y_offset"), ",") %>%
     mutate(
       pix_x_offset = as.double(pix_x_offset),
       pix_y_offset = as.double(pix_y_offset)
-    ) 
-  
-  # Move message column to last column for convenient notebook 
+    )
+
+  # Move message column to last column for convenient notebook
   # reading of dataframe output
   df <- df %>%
     relocate(-message)
-  
-  return (df)
-  
+
+  return(df)
 }
 ```
 
@@ -263,8 +267,8 @@ make_pretty_df(
 ```{r, recordings-data-methods}
 get_duration <- function(id) {
   # Duration from highest start time and lowest start time, in minutes
-  summary <- etd_recordings[[id]] %>% 
-    summarize(duration = (max(time) - min(time)) / (1000*60) ) %>%
+  summary <- etd_recordings[[id]] %>%
+    summarize(duration = (max(time) - min(time)) / (1000 * 60)) %>%
     unnest(cols = c())
   return(summary$duration)
 }
@@ -283,15 +287,14 @@ get_recording_time_matrix <- function(id_vector, dimensional_reducer = 1) {
   # times per row. Optional dimensional reducer to achieve times in seconds, minutes.
   n_ids <- length(id_vector)
   n_recordings <- 1 + length(etd_recordings[[id_vector[[1]]]]$time)
-  recording_time_matrix <- matrix(NA, nrow=n_ids, ncol=n_recordings)
-  
+  recording_time_matrix <- matrix(NA, nrow = n_ids, ncol = n_recordings)
+
   for (i in 1:n_ids) {
     id <- id_vector[i]
-    recording_time_matrix[i,] <- c(id, (etd_recordings[[id]]$time / dimensional_reducer))
+    recording_time_matrix[i, ] <- c(id, (etd_recordings[[id]]$time / dimensional_reducer))
   }
-  
+
   return(recording_time_matrix)
-  
 }
 
 get_recording_time_df <- function(id_vector, dimensional_reducer = 1) {
@@ -301,9 +304,8 @@ get_recording_time_df <- function(id_vector, dimensional_reducer = 1) {
   df <- as.data.frame(m)
   recording_time_df_cols <- c("id", "calibration", "validation", "task", "revalidation")
   colnames(df) <- recording_time_df_cols
-  
+
   return(df)
-  
 }
 ```
 
@@ -324,10 +326,9 @@ sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3
 
 ```{r, joint-data-methods}
 get_val_reval_by_id <- function(recording_time_df, i) {
-  
   recording_times_for_id <- recording_time_df %>%
     filter(id == i)
-  
+
   all_validations_by_id <- get_event_messages(etd_events[[i]]) %>%
     filter(category == "VALIDATION") %>%
     select(-c(message, category))
@@ -339,7 +340,7 @@ get_val_reval_by_id <- function(recording_time_df, i) {
     mutate(id = as.integer(i)) %>%
     relocate(id) %>%
     rename_with(~ paste(.x, "val", sep = "_"), -id)
-    
+
   revalidation <- all_validations_by_id %>%
     filter(sttime > (recording_times_for_id$task + 60 * 60 * 1000)) %>%
     arrange(sttime) %>%
@@ -347,40 +348,36 @@ get_val_reval_by_id <- function(recording_time_df, i) {
     mutate(id = as.integer(i)) %>%
     relocate(id) %>%
     rename_with(~ paste(.x, "reval", sep = "_"), -id)
-  
+
   left_join(
     validation,
     revalidation,
     by = c("id")
   )
-  
 }
 
 
 get_all_val_reval_df <- function(id_vector) {
-  
   if ("df" %in% ls()) rm("df")
-  
+
   df <- data.frame()
-  
+
   recording_time_df <- get_recording_time_df(id_vector)
-  
+
   for (i in id_vector) {
     val_reval_df <- get_val_reval_by_id(recording_time_df, i)
     df <- bind_rows(df, val_reval_df)
   }
-  
+
   return(df)
 }
 
 get_recording_and_val_reval_df <- function(recording_time_df, all_val_reval_df) {
-  
   left_join(
-    recording_time_df, 
+    recording_time_df,
     all_val_reval_df,
     by = c("id")
   )
-  
 }
 ```
 
@@ -405,14 +402,14 @@ Mutate to get change in average error, max error, and pixel offsets.
 
 ```{r, validation-revaliation-changes-dataframe}
 val_reval_changes_df <- recording_and_val_reval_df %>%
-    mutate(
-      avg_error_change = avg_error_reval - avg_error_val,
-      max_error_change = max_error_reval - max_error_val,
-      pix_x_offset_change = pix_x_offset_reval - pix_x_offset_val,
-      pix_y_offset_change = pix_y_offset_reval - pix_y_offset_val
-    ) %>%
-    relocate(c(avg_error_change, max_error_change, pix_x_offset_change, pix_y_offset_change), .after = id) %>%
-    arrange(abs(avg_error_change))
+  mutate(
+    avg_error_change = avg_error_reval - avg_error_val,
+    max_error_change = max_error_reval - max_error_val,
+    pix_x_offset_change = pix_x_offset_reval - pix_x_offset_val,
+    pix_y_offset_change = pix_y_offset_reval - pix_y_offset_val
+  ) %>%
+  relocate(c(avg_error_change, max_error_change, pix_x_offset_change, pix_y_offset_change), .after = id) %>%
+  arrange(abs(avg_error_change))
 
 make_pretty_df(
   val_reval_changes_df
@@ -429,14 +426,14 @@ low_avg_error_df <- val_reval_changes_df %>%
   filter(avg_error_change < 7)
 
 avg_error_corr <- cor.test(
-  low_avg_error_df$avg_error_val, 
+  low_avg_error_df$avg_error_val,
   low_avg_error_df$avg_error_reval,
   method = "pearson",
   use = "complete.obs"
 )
 
 max_error_corr <- cor.test(
-  low_avg_error_df$max_error_val, 
+  low_avg_error_df$max_error_val,
   low_avg_error_df$max_error_reval,
   method = "pearson",
   use = "complete.obs"
@@ -450,49 +447,44 @@ max_error_corr
 
 ```{r,corr-plot-methods}
 get_error_correlation_plot <- function(df, measure) {
-  
   ggscatter(
-    data = df, 
-    x = str_glue("{ measure }_error_val"), 
+    data = df,
+    x = str_glue("{ measure }_error_val"),
     y = str_glue("{ measure }_error_reval"),
     add = "reg.line",
     add.params = list(color = "blue", fill = "lightgray"),
     conf.int = TRUE
   ) +
-  coord_fixed(ratio = 1) +
-  geom_abline() +
-  stat_cor(method = "pearson") +
-  theme_classic2() +
-  labs(
-    title = tools::toTitleCase(str_glue("Correlation of { measure } error between validation and revalidation")),
-    x = tools::toTitleCase(str_glue("{ measure } Error of Validation")),
-    y = tools::toTitleCase(str_glue("{ measure } Error of Revalidation"))
-  )
-  
+    coord_fixed(ratio = 1) +
+    geom_abline() +
+    stat_cor(method = "pearson") +
+    theme_classic2() +
+    labs(
+      title = tools::toTitleCase(str_glue("Correlation of { measure } error between validation and revalidation")),
+      x = tools::toTitleCase(str_glue("{ measure } Error of Validation")),
+      y = tools::toTitleCase(str_glue("{ measure } Error of Revalidation"))
+    )
 }
 
 get_offset_correlation_plot <- function(df, measure) {
-  
   ggscatter(
-    data = df, 
-    x = str_glue("pix_{ measure }_offset_val"), 
+    data = df,
+    x = str_glue("pix_{ measure }_offset_val"),
     y = str_glue("pix_{ measure }_offset_reval"),
     add = "reg.line",
     add.params = list(color = "blue", fill = "lightgray"),
     conf.int = TRUE
   ) +
-  stat_cor(method = "pearson") +
-  theme_classic2() +
-  labs(
-    title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) changes between validation and revalidation")),
-    x = tools::toTitleCase(str_glue("{ measure } Offset in Validation (px)")),
-    y = tools::toTitleCase(str_glue("{ measure } Offset in Revalidation (px)"))
-  ) 
-  
+    stat_cor(method = "pearson") +
+    theme_classic2() +
+    labs(
+      title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) changes between validation and revalidation")),
+      x = tools::toTitleCase(str_glue("{ measure } Offset in Validation (px)")),
+      y = tools::toTitleCase(str_glue("{ measure } Offset in Revalidation (px)"))
+    )
 }
 
 get_offset_boxplot <- function(df, group, measure) {
-  
   ggboxplot(
     data = df,
     x = str_glue("{ group }"),
@@ -500,13 +492,11 @@ get_offset_boxplot <- function(df, group, measure) {
     color = str_glue("{ group }"),
     order = c("val", "reval")
   ) +
-  theme_classic2() +
-  labs(
-    title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) from validation to revalidation"))
-  ) 
-  
+    theme_classic2() +
+    labs(
+      title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) from validation to revalidation"))
+    )
 }
-
 ```
 
 ```{r, avg-error-corr-plot}
@@ -600,7 +590,7 @@ shapiro.test(categorized_offset_df$distance)
 
 ```{r}
 wilcox.test(
-  x = val_reval_changes_df$pix_x_offset_val, 
+  x = val_reval_changes_df$pix_x_offset_val,
   y = val_reval_changes_df$pix_x_offset_reval,
   paired = TRUE
 )
@@ -614,7 +604,7 @@ get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "x"
 
 ```{r}
 t.test(
-  x = val_reval_changes_df$pix_y_offset_val, 
+  x = val_reval_changes_df$pix_y_offset_val,
   y = val_reval_changes_df$pix_y_offset_reval,
   paired = TRUE
 )
@@ -653,38 +643,41 @@ make_paired_plot <- function(categorized_df, measure) {
     geom_point(size = 1, alpha = 0.5) +
     geom_line(alpha = 0.6, aes(color = !!sym(str_glue("{ measure }_change")))) +
     scale_color_gradient2(low = "red", mid = "gray", high = "blue")
-  return (plt)
+  return(plt)
 }
 ```
 
 #### Offset changes
 
 ```{r, offset-change-paired-plots}
-make_paired_plot(categorized_offset_df, 
-  measure = "x") +
+make_paired_plot(categorized_offset_df,
+  measure = "x"
+) +
   labs(
     title = "Change in X Offset between Validation and Revalidation",
-    #subtitle = "Only Decreases in Average Error",
+    # subtitle = "Only Decreases in Average Error",
     x = "Event Category",
     y = "X Offset (pixels)"
   ) +
   theme_classic2()
 
-make_paired_plot(categorized_offset_df, 
-  measure = "y") +
+make_paired_plot(categorized_offset_df,
+  measure = "y"
+) +
   labs(
     title = "Change in Y Offset between Validation and Revalidation",
-    #subtitle = "Only Decreases in Average Error",
+    # subtitle = "Only Decreases in Average Error",
     x = "Event Category",
     y = "Y Offset (pixels)"
   ) +
   theme_classic2()
 
-make_paired_plot(categorized_offset_df, 
-  measure = "distance") +
+make_paired_plot(categorized_offset_df,
+  measure = "distance"
+) +
   labs(
     title = "Change in Distance Offset between Validation and Revalidation",
-    #subtitle = "Only Decreases in Average Error",
+    # subtitle = "Only Decreases in Average Error",
     x = "Event Category",
     y = "Distance Offset (pixels)"
   ) +
@@ -695,7 +688,8 @@ make_paired_plot(categorized_offset_df,
 
 ```{r, error-change-paired-plot}
 make_paired_plot(categorized_error_df %>% filter(avg_change < 0),
-  measure = "avg") +
+  measure = "avg"
+) +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
     subtitle = "Only Decreases in Average Error",
@@ -705,7 +699,8 @@ make_paired_plot(categorized_error_df %>% filter(avg_change < 0),
   theme_classic2()
 
 make_paired_plot(categorized_error_df %>% filter(avg_change > 0),
-  measure = "avg") +
+  measure = "avg"
+) +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
     subtitle = "Only Increases in Average Error",
@@ -715,7 +710,8 @@ make_paired_plot(categorized_error_df %>% filter(avg_change > 0),
   theme_classic2()
 
 make_paired_plot(categorized_error_df %>% filter(id != 11),
-  measure = "avg") +
+  measure = "avg"
+) +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
     subtitle = "Only Increases in Average Error",
@@ -723,7 +719,6 @@ make_paired_plot(categorized_error_df %>% filter(id != 11),
     y = "Avg Error"
   ) +
   theme_classic2()
-
 ```
 
 ## Samples data
@@ -757,14 +752,14 @@ task_start_time <- val_reval_changes_df %>%
 # from start to end of task, then translate and transform
 # frame of reference for time to start at 0 in seconds. Remove
 # all error values for gaze sample and plot
-task_gaze_df <- etd_samples[[FIXED_ID]] %>% 
+task_gaze_df <- etd_samples[[FIXED_ID]] %>%
   filter(time >= task_start_time & time < task_start_time + MILLISECONDS_PER_HOUR) %>%
   mutate(time = (time - time[[1]]) / MILLISECONDS_PER_SECONDS) %>%
   filter(gx < GX_SAMPLE_ERROR_VALUE & gy < GY_SAMPLE_ERROR_VALUE)
 
 plt <- ggplot(task_gaze_df, aes(x = gx, y = gy)) +
-  #xlim(0, SCREEN_WIDTH_PX) +
-  #ylim(0, SCREEN_HEIGHT_PX) +
+  # xlim(0, SCREEN_WIDTH_PX) +
+  # ylim(0, SCREEN_HEIGHT_PX) +
   theme_minimal() +
   labs(
     title = str_glue("Heatmap of gaze samples across task duration for CSN{ str_pad(FIXED_ID, 3, pad = '0') }")
@@ -781,7 +776,7 @@ plt <- ggplot(task_gaze_df, aes(x = gx, y = gy)) +
 # 5. Compare distance from clock with and without correction by offset
 # 6. Worth looking at quartiles of average distance per participant
 # 7. Then plot average distance for each participant in a plot
-# 
+#
 # See matlab task code to see where tip of clock hand is at every second
 plt + geom_bin2d(binwidth = c(SCREEN_BIN_WIDTH_PX, SCREEN_BIN_WIDTH_PX))
 ```
@@ -800,7 +795,7 @@ make_pretty_df(
 
 ```{r}
 df <- val_reval_changes_df %>%
-    filter(avg_error_val < 2.5 & avg_error_reval < 2.5)
+  filter(avg_error_val < 2.5 & avg_error_reval < 2.5)
 
 t.test(df$avg_error_change, mu = 0)
 ```
