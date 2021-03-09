@@ -46,8 +46,18 @@ for i = 1:length(filenames)
   
   bd = load(fn).subjdata;
   
+  % If experiment has not begin time, don't use and continue
+  % to next.
+  if (not(isfield(bd, 'expBegin')))
+    continue
+  end
+      
   N_TRIALS = bd.nTrials;
+  
+  % Used to spread boolean values to vectors for table
   BASE_BOOL = true(N_TRIALS, 1);
+  
+  % Used to spread numeric values to vectors for table
   BASE_ONES = ones(N_TRIALS, 1);
   
   trial = transpose(1:N_TRIALS);
@@ -55,12 +65,12 @@ for i = 1:length(filenames)
   p_signal = BASE_ONES * bd.pSignal;
   resp = bd.resps;
   step = bd.steps;
-  img_index = bd.img_ind;
-  exp_begin = bd.expBegin;
-  exp_end = bd.expEnd;
+  image_index = bd.img_ind;
+  task_begin = BASE_ONES * bd.expBegin;
+  task_end = BASE_ONES * bd.expEnd;
 
   participant_table = table(trial, clock_side, p_signal, resp, ...
-                      step, img_index);
+                      step, image_index, task_begin, task_end);
   
   participant_fn = participant_id + '.csv';
 
