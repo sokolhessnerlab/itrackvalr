@@ -189,7 +189,11 @@ and then assigns a list of these loaded dataframes to the approriate `etd_*` var
 ```{r, load-etd-lists, message=FALSE}
 etd_events <- load_participant_data(extracted_eyetracker_data_path, id_vector, event_csv)
 etd_recordings <- load_participant_data(extracted_eyetracker_data_path, id_vector, recordings_csv)
-etd_samples <- load_participant_data(extracted_eyetracker_data_path, id_vector, sample_csv)
+etd_samples <- load_participant_data(
+  extracted_eyetracker_data_path,
+  id_vector,
+  sample_csv
+)
 ```
 
 ### Load all behavioral data for each participant
@@ -899,7 +903,6 @@ task_gaze_df_list <- get_task_gaze_df_list(etd_samples, id_vector)
 
 ```{r}
 reflect_over_midpoint <- function(point, midpoint) {
-  delta <- point - midpoint
   return(2 * midpoint - point)
 }
 
