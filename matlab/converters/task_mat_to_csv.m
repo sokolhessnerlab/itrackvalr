@@ -56,6 +56,8 @@ for i = 1:length(filenames)
   resp = bd.resps;
   step = bd.steps;
   img_index = bd.img_ind;
+  exp_begin = bd.expBegin;
+  exp_end = bd.expEnd;
 
   participant_table = table(trial, clock_side, p_signal, resp, ...
                       step, img_index);
