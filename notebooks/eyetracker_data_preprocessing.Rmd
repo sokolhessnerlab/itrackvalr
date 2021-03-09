@@ -40,6 +40,7 @@ load_all()
 
 # Load dependencies
 library(tidyverse)
+library(rlang)
 library(ggpubr)
 ```
 
@@ -75,6 +76,12 @@ extracted_data_path <- file.path(
 extracted_eyetracker_data_path <- file.path(
   extracted_data_path,
   config$path$eyetracker
+)
+
+# Extracted behavioral data subdirectory path
+extracted_behavioral_data_path <- file.path(
+  extracted_data_path,
+  config$path$behavioral
 )
 
 # Extracted eyetracker data file names (to CSV, from MAT)
@@ -134,30 +141,64 @@ get_id_vector <- function(path_to_dir) {
   return(id_vector)
 }
 
-load_all_etd_by_filename_csv <- function(path_to_dir, id_vector, filename_csv = sample_csv) {
-  # Loads all eyetracking data of given filename across participants
-  etd_list <- list()
+#' Read a directory of files, or directory of directories of files specifying
+#' a specific commanly-named file, into a dataframe list.
+#'
+#' @param path_to_dir A path string to a directory of CSV data
+#' @param id_vector A vector of participant IDs as integers
+#' @param filename_csv A string name for a file type, including extension.
+#'
+#' @examples
+#' load_participant_data(extracted_eyetracker_data_path, id_vector, event_csv)
+load_participant_data <- function(path_to_dir, id_vector, filename_csv) {
+  # TODO: Include column specfications by type of loading.
+  if ("df" %in% ls()) rm("df")
+  df <- data.frame()
+
+  df_list <- list()
+
   for (id in id_vector) {
-    path_to_etd <- file.path(get_path_to_id(path_to_dir, id), filename_csv)
-    etd_list[[id]] <- readr::read_csv(path_to_etd)
+    if (is_missing(filename_csv)) {
+      # Path to file of the participant data as a CSV, such as `path/to/CSN004.csv`.
+      path_to_file <- stringr::str_c(get_path_to_id(path_to_dir, id), ".csv")
+    } else {
+      # Path to files nested within a participant-identified directory, such
+      # as with eyetracking data that is split into multiple CSVs, which may
+      # be `path/to/CSN004/data.csv`.
+      path_to_file <- file.path(get_path_to_id(path_to_dir, id), filename_csv)
+    }
+
+    df <- readr::read_csv(path_to_file)
+    df_list[[id]] <- df
   }
-  return(etd_list)
+
+  return(df_list)
 }
 
 # Convenience instantiation of the id vector for later use. Can use
-# the getter method at any point for same output.
+# the getter method at any point for same output. Note: This uses the
+# extracted eyetracker data path.
 id_vector <- get_id_vector(extracted_eyetracker_data_path)
 ```
 
-### Load data for each participant
+### Load eyetracking data for each participant
 
 The following chunk loads CSVs for participants' event, recordings, and sample data
 and then assigns a list of these loaded dataframes to the approriate `etd_*` variable.
 
-```{r, load-dataframe-lists, message=FALSE}
-etd_events <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, event_csv)
-etd_recordings <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, recordings_csv)
-etd_samples <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, sample_csv)
+```{r, load-etd-lists, message=FALSE}
+etd_events <- load_participant_data(extracted_eyetracker_data_path, id_vector, event_csv)
+etd_recordings <- load_participant_data(extracted_eyetracker_data_path, id_vector, recordings_csv)
+etd_samples <- load_participant_data(extracted_eyetracker_data_path, id_vector, sample_csv)
+```
+
+### Load all behavioral data for each participant
+
+The following chunk loads CSVs for participants' behavioral data data
+and then assigns a list of these loaded dataframes to `behavioral_df_list`.
+
+``````{r, load-behavioral-list, message=FALSE}
+behavioral_df_list <- load_participant_data(extracted_behavioral_data_path, id_vector)
 ```
 
 ## Events data
@@ -225,7 +266,10 @@ get_event_messages <- function(participant_events) {
 
   # Extract rows from categorized event result messages
   df <- df %>%
-    filter(str_detect(message, CALIBRATION_RESULT_MESSAGE) | str_detect(message, VALIDATION_RESULT_MESSAGE)) %>%
+    filter(
+      str_detect(message, CALIBRATION_RESULT_MESSAGE) |
+        str_detect(message, VALIDATION_RESULT_MESSAGE)
+    ) %>%
     mutate(
       category = get_category_from_message(message),
       quality = get_quality_from_message(message),
@@ -356,7 +400,6 @@ get_val_reval_by_id <- function(recording_time_df, i) {
   )
 }
 
-
 get_all_val_reval_df <- function(id_vector) {
   if ("df" %in% ls()) rm("df")
 
@@ -401,15 +444,39 @@ make_pretty_df(
 Mutate to get change in average error, max error, and pixel offsets. 
 
 ```{r, validation-revaliation-changes-dataframe}
-val_reval_changes_df <- recording_and_val_reval_df %>%
-  mutate(
-    avg_error_change = avg_error_reval - avg_error_val,
-    max_error_change = max_error_reval - max_error_val,
-    pix_x_offset_change = pix_x_offset_reval - pix_x_offset_val,
-    pix_y_offset_change = pix_y_offset_reval - pix_y_offset_val
-  ) %>%
-  relocate(c(avg_error_change, max_error_change, pix_x_offset_change, pix_y_offset_change), .after = id) %>%
-  arrange(abs(avg_error_change))
+get_val_reval_changes_df <- function(recording_time_df, all_val_reval_df) {
+  
+  # Get recording times for validation and revalidation
+  recording_and_val_reval_df <- get_recording_and_val_reval_df(
+    recording_time_df,
+    all_val_reval_df
+  )
+  
+  # Mutate and relocate error and offset data, then arrange
+  # by absolute value of average error change
+  val_reval_changes_df <- recording_and_val_reval_df %>%
+    mutate(
+      avg_error_change = avg_error_reval - avg_error_val,
+      max_error_change = max_error_reval - max_error_val,
+      pix_x_offset_change = pix_x_offset_reval - pix_x_offset_val,
+      pix_y_offset_change = pix_y_offset_reval - pix_y_offset_val
+    ) %>%
+    relocate(
+      c(
+        avg_error_change,
+        max_error_change,
+        pix_x_offset_change,
+        pix_y_offset_change
+      ),
+      .after = id
+    ) %>%
+    arrange(abs(avg_error_change))
+}
+
+val_reval_changes_df <- get_val_reval_changes_df(
+  recording_time_df,
+  all_val_reval_df
+)
 
 make_pretty_df(
   val_reval_changes_df
@@ -721,6 +788,43 @@ make_paired_plot(categorized_error_df %>% filter(id != 11),
   theme_classic2()
 ```
 
+## Behavioral data
+
+### Clock sides
+
+Get the clock sides for each participant and create a dataframe of
+their id and side values.
+
+```{r, clock-sides}
+CLOCK_LEFT <- 0
+CLOCK_RIGHT <- 1
+
+get_clock_sides <- function(behavioral_df_list) {
+  if ("df" %in% ls()) rm("df")
+  df <- data.frame(id = integer(), side = integer())
+
+  for (i in id_vector) {
+    side <- behavioral_df_list[[i]] %>%
+      slice(1) %>%
+      pull(clock_side)
+    df <- df %>% dplyr::add_row(tibble(id = i, side))
+  }
+
+  return(df)
+}
+
+clock_sides_df <- get_clock_sides(behavioral_df_list)
+
+# Count of left and right clock sides
+make_pretty_df(
+  head(
+    clock_sides_df %>%
+      group_by(side) %>%
+      count()
+  )
+)
+```
+
 ## Samples data
 
 ```{r, preview-sample}
@@ -729,33 +833,88 @@ make_pretty_df(
 )
 ```
 
-### Extract samples for task duration
+### Constants
 
-```{r, task-gaze-samples}
-FIXED_ID <- 4
+```{r}
 MILLISECONDS_PER_HOUR <- 3600000
 MILLISECONDS_PER_SECONDS <- 1000
-GX_SAMPLE_ERROR_VALUE <- 10^7
-GY_SAMPLE_ERROR_VALUE <- 10^7
 SCREEN_WIDTH_PX <- 1280
 SCREEN_HEIGHT_PX <- 1024
 SCREEN_BIN_WIDTH_PX <- 16
 SCREEN_CENTER_COORD <- c(SCREEN_WIDTH_PX / 2, SCREEN_HEIGHT_PX / 2)
 
+GX_SAMPLE_ERROR_VALUE <- 10^7
+GY_SAMPLE_ERROR_VALUE <- 10^7
+```
+
+### Extract samples for task duration
+
+```{r, task-gaze-samples}
 # get the task start time from recordings data embedded in cleaned
 # val_reval changes dataframe
-task_start_time <- val_reval_changes_df %>%
-  filter(id == FIXED_ID) %>%
-  pull(task)
+get_task_start_time <- function(val_reval_changes_df, i) {
+  task_start_time <- val_reval_changes_df %>%
+    filter(id == i) %>%
+    pull(task)
+}
 
 # Filter sample data per participant for the hour duration
 # from start to end of task, then translate and transform
 # frame of reference for time to start at 0 in seconds. Remove
 # all error values for gaze sample and plot
-task_gaze_df <- etd_samples[[FIXED_ID]] %>%
-  filter(time >= task_start_time & time < task_start_time + MILLISECONDS_PER_HOUR) %>%
-  mutate(time = (time - time[[1]]) / MILLISECONDS_PER_SECONDS) %>%
-  filter(gx < GX_SAMPLE_ERROR_VALUE & gy < GY_SAMPLE_ERROR_VALUE)
+get_task_gaze_df <- function(etd_samples, val_reval_changes_df, id) {
+  task_start_time <- get_task_start_time(val_reval_changes_df, id)
+  task_gaze_df <- etd_samples[[id]] %>%
+    filter(time >= task_start_time & time < task_start_time + MILLISECONDS_PER_HOUR) %>%
+    mutate(time = (time - time[[1]]) / MILLISECONDS_PER_SECONDS) %>%
+    filter(gx < GX_SAMPLE_ERROR_VALUE & gy < GY_SAMPLE_ERROR_VALUE)
+  return(task_gaze_df)
+}
+
+# Get list of task gaze dataframes
+get_task_gaze_df_list <- function(etd_samples, id_vector) {
+  
+  val_reval_changes_df <- get_val_reval_changes_df(
+    recording_time_df,
+    all_val_reval_df
+  )
+  
+  if ("df" %in% ls()) rm("df")
+  df <- data.frame()
+  
+  df_list <- list()
+
+  for (id in id_vector) {
+    df <- get_task_gaze_df(etd_samples, val_reval_changes_df, id)
+    df_list[[id]] <- df
+  }
+
+  return(df_list)
+}
+
+task_gaze_df_list <- get_task_gaze_df_list(etd_samples, id_vector)
+```
+
+### Flip right-side clocks to left side
+
+```{r}
+reflect_over_midpoint <- function(point, midpoint) {
+  delta <- point - midpoint
+  return(2 * midpoint - point)
+}
+
+right_clocks_df <- clock_sides_df %>%
+  filter(side == CLOCK_RIGHT)
+
+right_clocks_df
+#task_gaze_df_list[[2]] %>%
+#  mutate(gx = reflect_over_midpoint(gx, SCREEN_CENTER_COORD[[1]]))
+```
+
+```{r, plot-heatmap-task-gaze}
+FIXED_ID <- 4
+
+task_gaze_df <- task_gaze_df_list[[FIXED_ID]]
 
 plt <- ggplot(task_gaze_df, aes(x = gx, y = gy)) +
   # xlim(0, SCREEN_WIDTH_PX) +
