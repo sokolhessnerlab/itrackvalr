@@ -44,13 +44,8 @@ for i = 1:length(filenames)
     continue
   end
   
+  % Load behavioral subject data
   bd = load(fn).subjdata;
-  
-  % If experiment has not begin time, don't use and continue
-  % to next.
-  if (not(isfield(bd, 'expBegin')))
-    continue
-  end
       
   N_TRIALS = bd.nTrials;
   
@@ -60,6 +55,7 @@ for i = 1:length(filenames)
   % Used to spread numeric values to vectors for table
   BASE_ONES = ones(N_TRIALS, 1);
   
+  % Assign columns
   trial = transpose(1:N_TRIALS);
   clock_side = BASE_BOOL * bd.lr;
   p_signal = BASE_ONES * bd.pSignal;
