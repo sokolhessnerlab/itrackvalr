@@ -1,0 +1,30 @@
+---
+title: "Summary Notebook: Incompletes"
+author: "Ari Dyckovsky"
+---
+
+```{r, notebook-options, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  strip.white = TRUE,
+  highlight = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+
+make_pretty_df <- function(df) {
+  if (isTRUE(getOption("knitr.in.progress"))) {
+    knitr::kable(df, "simple", format.args = list(big.mark = ",", scientific = FALSE))
+  } else {
+    df
+  }
+}
+```
+
+## Participants who did not complete the task
+
+### How many participants were incomplete?
+
+### What were the reasons participants did not complete the task?
+
+### Can we group the incompletes by common reasons?
