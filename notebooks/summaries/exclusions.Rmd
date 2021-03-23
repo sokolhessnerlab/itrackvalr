@@ -20,17 +20,21 @@ make_pretty_df <- function(df) {
 }
 ```
 
-## Participants we are excludinbg from analysis
+## Participants we are excluding from analysis
 
 ### How many participants are excluded from the analysis phase?
 
-A total of **2 participants** of 49 eligible (completed task) are being fully excluded from analysis.
+A total of **3 participants** of 49 eligible (completed task) are being fully excluded from analysis.
 
 ### Which participants are excluded and why?
 
-Both CSN011 and CSN027 are excluded from the analysis due to poor calibration
-of eye-tracking quality, as determined by the change in validation metric `avg_error`
-between pre- and post-task validation phases. Our upper bound of average error that 
-is _good enough_ to be considered for analysis is 2.5 degrees. For a participant to
-be included, the average error must be within 2.5 degress at _both_ validation and
-re-validation.
+The following participants are excluded:
+
+- CSN002
+- CSN011
+- CSN027
+
+These three participants are excluded due to poor eye-tracker calibration quality,
+as determined by the validation metric `avg_error` at pre- and post-task validation phases.
+A participant's eye-tracking quality is _good enough_ for analysis if the average error is
+less than 2.5 degrees at _both_ validation and re-validation phases.
