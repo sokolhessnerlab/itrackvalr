@@ -943,14 +943,12 @@ plt <- ggplot(task_gaze_df, aes(x = gx, y = gy)) +
 plt + geom_bin2d(binwidth = c(SCREEN_BIN_WIDTH_PX, SCREEN_BIN_WIDTH_PX))
 ```
 
-## Playground
-
-Things in progress
+## Exclusions by threshold of 2.5 degrees
 
 ```{r}
 make_pretty_df(
   val_reval_changes_df %>%
-    filter(avg_error_val < 1.5 & avg_error_reval < 1.5)
+    filter(avg_error_val >= 2.5 | avg_error_reval >= 2.5)
 )
 ```
 
