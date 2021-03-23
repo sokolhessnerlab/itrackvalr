@@ -943,7 +943,7 @@ plt <- ggplot(task_gaze_df, aes(x = gx, y = gy)) +
 plt + geom_bin2d(binwidth = c(SCREEN_BIN_WIDTH_PX, SCREEN_BIN_WIDTH_PX))
 ```
 
-## Exclusions by threshold of 2.5 degrees
+## Exclusions by average error threshold
 
 ```{r}
 make_pretty_df(

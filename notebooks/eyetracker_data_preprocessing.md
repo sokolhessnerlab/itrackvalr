@@ -43,8 +43,8 @@ Ari Dyckovsky
         duration](#extract-samples-for-task-duration)
       - [Flip right-side clocks to left
         side](#flip-right-side-clocks-to-left-side)
-  - [Exclusions by threshold of 2.5
-    degrees](#exclusions-by-threshold-of-2.5-degrees)
+  - [Exclusions by average error
+    threshold](#exclusions-by-average-error-threshold)
 
 ## Setup
 
@@ -1263,7 +1263,7 @@ plt + geom_bin2d(binwidth = c(SCREEN_BIN_WIDTH_PX, SCREEN_BIN_WIDTH_PX))
 
 ![](eyetracker_data_preprocessing_files/figure-gfm/plot-heatmap-task-gaze-1.png)<!-- -->
 
-## Exclusions by threshold of 2.5 degrees
+## Exclusions by average error threshold
 
 ``` r
 make_pretty_df(
