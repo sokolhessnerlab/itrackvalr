@@ -1,3 +1,4 @@
+source("renv/activate.R")
 #### -- Consistent File Downloads -- ####
 if(.Platform$OS.type == "windows") {
   options(
