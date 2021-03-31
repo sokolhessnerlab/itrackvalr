@@ -23,4 +23,5 @@ Imports:
     config,
     tidyverse,
     ggpubr,
-    magrittr
+    magrittr,
+    targets
