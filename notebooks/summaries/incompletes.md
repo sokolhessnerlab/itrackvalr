@@ -15,7 +15,7 @@ Ari Dyckovsky
 
 ### How many participants were incomplete?
 
-A total of **8 participants** of 57 recruited did *not complete* the
+A total of **7 participants** of 57 recruited did *not complete* the
 task.
 
 ### What were the reasons participants did not complete the task?
@@ -27,22 +27,15 @@ in the following list by participant identifier:
   - CSN014 had calibration issues (too much eye makeup)
   - CSN024 stopped early due to illness
   - CSN028 had calibration issues (difficult eye shape)
-  - CSN031 (no notes; Experimenter: LA)
+  - CSN031 had calibration issues (wore glasses)
   - CSN046 stopped early due to graphic images
   - CSN050 had calibration issues (wore contacts)
-
-Currently, we do not have enough information on:
-
-  - CSN013 may have completed the task
 
 ### Can we group the incompletes by common reasons?
 
 Yes, the incompletes can be grouped by two common reasons:
 
 1.  Calibration difficulty (i.e., corrective lenses or make-up) applies
-    to 4 of 8 incompletes
+    to 5 of 7 incompletes
 2.  Deciding to stop the task early (i.e., illness or difficulty with
-    image content) applies to 2 of 8 incompletes
-
-Otherwise, 2 of 8 listed incompletes (CSN013, CSN031) have unknown
-reasons.
+    image content) applies to 2 of 7 incompletes
