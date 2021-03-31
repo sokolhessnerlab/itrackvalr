@@ -24,4 +24,5 @@ Imports:
     tidyverse,
     ggpubr,
     magrittr,
-    targets
+    targets,
+    tarchetypes
