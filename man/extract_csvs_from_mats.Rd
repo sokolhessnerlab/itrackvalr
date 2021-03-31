@@ -9,6 +9,9 @@ extract_csvs_from_mats(mat_file)
 \arguments{
 \item{mat_file}{Character, file name with extension ".m"}
 }
+\value{
+0 for success; 1 for error. see matlbr docs.
+}
 \description{
 If MATLAB is available on system, run script to create CSV
 from MAT files

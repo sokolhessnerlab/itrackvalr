@@ -2,6 +2,7 @@
 #' @description If MATLAB is available on system, run script to create CSV
 #'   from MAT files
 #' @export
+#' @return 0 for success; 1 for error. see matlbr docs.
 #' @param mat_file Character, file name with extension ".m"
 #' @examples
 #' library(matlabr)
