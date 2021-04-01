@@ -20,11 +20,8 @@ The TL;DR/abstract of the summary. A short paragraph (only a few sentences at mo
 All the details, for example subject numbers & reasons for exclusion; estimates and p-values; graphs of results; specific challenges encountered, and how they were dealt with; etc.
 
 - [ ] Question 1
-**Answer:**
 - [ ] Question 2
-**Answer:**
 - [ ] ...
-**Answer:**
 
 ### Additional context
 
@@ -32,4 +29,8 @@ Any extra context for this summarization needed for completeness goes here.
 
 ### Conclusions, next steps, and open questions (optional)
 
-Conceptually, what's next? Does this wrap up this area of inquiry? Is more needed? Should a new GitHub issue be opened? If an analysis, what questions does this raise that should be considered by subsequent analyses or addressed in the paper?
+- Conceptually, what's next?
+- Does this wrap up this area of inquiry?
+- Is more needed to wrap up this area of inquiry?
+- Should a new GitHub issue be opened?
+- If an analysis, what questions does this raise that should be considered by subsequent analyses or addressed in the paper?
