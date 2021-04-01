@@ -12,8 +12,10 @@ Ari Dyckovsky
   - [Load extracted data](#load-extracted-data)
       - [Define loading methods for
         CSVs](#define-loading-methods-for-csvs)
-      - [Load data for each
-        participant](#load-data-for-each-participant)
+      - [Load eyetracking data for each
+        participant](#load-eyetracking-data-for-each-participant)
+      - [Load all behavioral data for each
+        participant](#load-all-behavioral-data-for-each-participant)
   - [Events data](#events-data)
       - [Methods using `etd_events` list of loaded
         dataframes](#methods-using-etd_events-list-of-loaded-dataframes)
@@ -33,10 +35,16 @@ Ari Dyckovsky
       - [Paired Plots](#paired-plots)
       - [Paired plots for validation-revalidation
         changes](#paired-plots-for-validation-revalidation-changes)
+  - [Behavioral data](#behavioral-data)
+      - [Clock sides](#clock-sides)
   - [Samples data](#samples-data)
+      - [Constants](#constants)
       - [Extract samples for task
         duration](#extract-samples-for-task-duration)
-  - [Playground](#playground)
+      - [Flip right-side clocks to left
+        side](#flip-right-side-clocks-to-left-side)
+  - [Exclusions by average error
+    threshold](#exclusions-by-average-error-threshold)
 
 ## Setup
 
@@ -58,6 +66,7 @@ load_all()
 
 # Load dependencies
 library(tidyverse)
+library(rlang)
 library(ggpubr)
 ```
 
@@ -86,12 +95,22 @@ inherits defaults other than explicit overrides).
 data_path <- config$path$data
 
 # Extracted data subdirectory path
-extracted_data_path <- file.path(data_path, 
-                                 config$path$extracted)
+extracted_data_path <- file.path(
+  data_path,
+  config$path$extracted
+)
 
 # Extracted eyetracker data subdirectory path
-extracted_eyetracker_data_path <- file.path(extracted_data_path, 
-                                            config$path$eyetracker)
+extracted_eyetracker_data_path <- file.path(
+  extracted_data_path,
+  config$path$eyetracker
+)
+
+# Extracted behavioral data subdirectory path
+extracted_behavioral_data_path <- file.path(
+  extracted_data_path,
+  config$path$behavioral
+)
 
 # Extracted eyetracker data file names (to CSV, from MAT)
 event_csv <- config$extracted_files$eyetracker_event_csv
@@ -123,13 +142,14 @@ min_id <- participant_id_min
 max_id <- participant_id_max
 
 get_path_to_id <- function(path_to_dir, id) {
-  padded_id <- stringr::str_pad(id, 
-                                participant_id_pad_length, 
-                                pad = participant_id_pad_character)
+  padded_id <- stringr::str_pad(id,
+    participant_id_pad_length,
+    pad = participant_id_pad_character
+  )
   participant_id <- stringr::str_c(participant_id_prefix, padded_id)
-  return (
+  return(
     file.path(
-      path_to_dir, 
+      path_to_dir,
       participant_id
     )
   )
@@ -142,38 +162,77 @@ get_id_vector <- function(path_to_dir) {
   # a complete participant)
   id_vector <- c()
   for (i in min_id:max_id) {
-    if ( dir.exists(get_path_to_id(path_to_dir, i)) ) {
+    if (dir.exists(get_path_to_id(path_to_dir, i))) {
       id_vector <- c(id_vector, i)
     }
   }
-  return (id_vector)
+  return(id_vector)
 }
 
-load_all_etd_by_filename_csv <-function(path_to_dir, id_vector, filename_csv = sample_csv) {
-  # Loads all eyetracking data of given filename across participants
-  etd_list <- list()
+#' Read a directory of files, or directory of directories of files specifying
+#' a specific commanly-named file, into a dataframe list.
+#'
+#' @param path_to_dir A path string to a directory of CSV data
+#' @param id_vector A vector of participant IDs as integers
+#' @param filename_csv A string name for a file type, including extension.
+#'
+#' @examples
+#' load_participant_data(extracted_eyetracker_data_path, id_vector, event_csv)
+load_participant_data <- function(path_to_dir, id_vector, filename_csv) {
+  # TODO: Include column specfications by type of loading.
+  if ("df" %in% ls()) rm("df")
+  df <- data.frame()
+
+  df_list <- list()
+
   for (id in id_vector) {
-    path_to_etd <- file.path(get_path_to_id(path_to_dir, id), filename_csv)
-    etd_list[[id]] <- readr::read_csv(path_to_etd)
+    if (is_missing(filename_csv)) {
+      # Path to file of the participant data as a CSV, such as `path/to/CSN004.csv`.
+      path_to_file <- stringr::str_c(get_path_to_id(path_to_dir, id), ".csv")
+    } else {
+      # Path to files nested within a participant-identified directory, such
+      # as with eyetracking data that is split into multiple CSVs, which may
+      # be `path/to/CSN004/data.csv`.
+      path_to_file <- file.path(get_path_to_id(path_to_dir, id), filename_csv)
+    }
+
+    df <- readr::read_csv(path_to_file)
+    df_list[[id]] <- df
   }
-  return (etd_list)
+
+  return(df_list)
 }
 
 # Convenience instantiation of the id vector for later use. Can use
-# the getter method at any point for same output.
+# the getter method at any point for same output. Note: This uses the
+# extracted eyetracker data path.
 id_vector <- get_id_vector(extracted_eyetracker_data_path)
 ```
 
-### Load data for each participant
+### Load eyetracking data for each participant
 
 The following chunk loads CSVs for participants’ event, recordings, and
 sample data and then assigns a list of these loaded dataframes to the
 approriate `etd_*` variable.
 
 ``` r
-etd_events <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, event_csv)
-etd_recordings <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, recordings_csv)
-etd_samples <- load_all_etd_by_filename_csv(extracted_eyetracker_data_path, id_vector, sample_csv)
+etd_events <- load_participant_data(extracted_eyetracker_data_path, id_vector, event_csv)
+etd_recordings <- load_participant_data(extracted_eyetracker_data_path, id_vector, recordings_csv)
+etd_samples <- load_participant_data(
+  extracted_eyetracker_data_path,
+  id_vector,
+  sample_csv
+)
+```
+
+### Load all behavioral data for each participant
+
+The following chunk loads CSVs for participants’ behavioral data data
+and then assigns a list of these loaded dataframes to
+`behavioral_df_list`.
+
+``` r
+behavioral_df_list <- load_participant_data(extracted_behavioral_data_path, id_vector)
 ```
 
 ## Events data
@@ -229,19 +288,22 @@ get_pix_offset_from_message <- function(message) {
 
 get_event_messages <- function(participant_events) {
   # Get the significant event messages for a single participant
-  # events data by sttime, producing the extracted rows and columns 
+  # events data by sttime, producing the extracted rows and columns
   # from message contents.
-  
+
   if ("df" %in% ls()) rm("df")
-  
+
   # Select desired columns and remove white space around message
   df <- participant_events %>%
     select(message, sttime) %>%
-    transmute(message = str_squish(str_trim(message)), sttime = sttime) 
-  
+    transmute(message = str_squish(str_trim(message)), sttime = sttime)
+
   # Extract rows from categorized event result messages
   df <- df %>%
-    filter(str_detect(message, CALIBRATION_RESULT_MESSAGE) | str_detect(message, VALIDATION_RESULT_MESSAGE)) %>%
+    filter(
+      str_detect(message, CALIBRATION_RESULT_MESSAGE) |
+        str_detect(message, VALIDATION_RESULT_MESSAGE)
+    ) %>%
     mutate(
       category = get_category_from_message(message),
       quality = get_quality_from_message(message),
@@ -249,23 +311,22 @@ get_event_messages <- function(participant_events) {
       max_error = get_max_error_from_message(message),
       deg_offset = get_deg_offset_from_message(message),
       pix_offset = get_pix_offset_from_message(message)
-    ) 
-  
+    )
+
   # Extract columns for pixel offsets of x,y coordinates
   df <- df %>%
     separate(pix_offset, c("pix_x_offset", "pix_y_offset"), ",") %>%
     mutate(
       pix_x_offset = as.double(pix_x_offset),
       pix_y_offset = as.double(pix_y_offset)
-    ) 
-  
-  # Move message column to last column for convenient notebook 
+    )
+
+  # Move message column to last column for convenient notebook
   # reading of dataframe output
   df <- df %>%
     relocate(-message)
-  
-  return (df)
-  
+
+  return(df)
 }
 ```
 
@@ -291,8 +352,8 @@ make_pretty_df(
 ``` r
 get_duration <- function(id) {
   # Duration from highest start time and lowest start time, in minutes
-  summary <- etd_recordings[[id]] %>% 
-    summarize(duration = (max(time) - min(time)) / (1000*60) ) %>%
+  summary <- etd_recordings[[id]] %>%
+    summarize(duration = (max(time) - min(time)) / (1000 * 60)) %>%
     unnest(cols = c())
   return(summary$duration)
 }
@@ -311,15 +372,14 @@ get_recording_time_matrix <- function(id_vector, dimensional_reducer = 1) {
   # times per row. Optional dimensional reducer to achieve times in seconds, minutes.
   n_ids <- length(id_vector)
   n_recordings <- 1 + length(etd_recordings[[id_vector[[1]]]]$time)
-  recording_time_matrix <- matrix(NA, nrow=n_ids, ncol=n_recordings)
-  
+  recording_time_matrix <- matrix(NA, nrow = n_ids, ncol = n_recordings)
+
   for (i in 1:n_ids) {
     id <- id_vector[i]
-    recording_time_matrix[i,] <- c(id, (etd_recordings[[id]]$time / dimensional_reducer))
+    recording_time_matrix[i, ] <- c(id, (etd_recordings[[id]]$time / dimensional_reducer))
   }
-  
+
   return(recording_time_matrix)
-  
 }
 
 get_recording_time_df <- function(id_vector, dimensional_reducer = 1) {
@@ -329,9 +389,8 @@ get_recording_time_df <- function(id_vector, dimensional_reducer = 1) {
   df <- as.data.frame(m)
   recording_time_df_cols <- c("id", "calibration", "validation", "task", "revalidation")
   colnames(df) <- recording_time_df_cols
-  
+
   return(df)
-  
 }
 ```
 
@@ -362,10 +421,9 @@ sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3
 
 ``` r
 get_val_reval_by_id <- function(recording_time_df, i) {
-  
   recording_times_for_id <- recording_time_df %>%
     filter(id == i)
-  
+
   all_validations_by_id <- get_event_messages(etd_events[[i]]) %>%
     filter(category == "VALIDATION") %>%
     select(-c(message, category))
@@ -377,7 +435,7 @@ get_val_reval_by_id <- function(recording_time_df, i) {
     mutate(id = as.integer(i)) %>%
     relocate(id) %>%
     rename_with(~ paste(.x, "val", sep = "_"), -id)
-    
+
   revalidation <- all_validations_by_id %>%
     filter(sttime > (recording_times_for_id$task + 60 * 60 * 1000)) %>%
     arrange(sttime) %>%
@@ -385,40 +443,35 @@ get_val_reval_by_id <- function(recording_time_df, i) {
     mutate(id = as.integer(i)) %>%
     relocate(id) %>%
     rename_with(~ paste(.x, "reval", sep = "_"), -id)
-  
+
   left_join(
     validation,
     revalidation,
     by = c("id")
   )
-  
 }
 
-
 get_all_val_reval_df <- function(id_vector) {
-  
   if ("df" %in% ls()) rm("df")
-  
+
   df <- data.frame()
-  
+
   recording_time_df <- get_recording_time_df(id_vector)
-  
+
   for (i in id_vector) {
     val_reval_df <- get_val_reval_by_id(recording_time_df, i)
     df <- bind_rows(df, val_reval_df)
   }
-  
+
   return(df)
 }
 
 get_recording_and_val_reval_df <- function(recording_time_df, all_val_reval_df) {
-  
   left_join(
-    recording_time_df, 
+    recording_time_df,
     all_val_reval_df,
     by = c("id")
   )
-  
 }
 ```
 
@@ -455,15 +508,39 @@ make_pretty_df(
 Mutate to get change in average error, max error, and pixel offsets.
 
 ``` r
-val_reval_changes_df <- recording_and_val_reval_df %>%
+get_val_reval_changes_df <- function(recording_time_df, all_val_reval_df) {
+  
+  # Get recording times for validation and revalidation
+  recording_and_val_reval_df <- get_recording_and_val_reval_df(
+    recording_time_df,
+    all_val_reval_df
+  )
+  
+  # Mutate and relocate error and offset data, then arrange
+  # by absolute value of average error change
+  val_reval_changes_df <- recording_and_val_reval_df %>%
     mutate(
       avg_error_change = avg_error_reval - avg_error_val,
       max_error_change = max_error_reval - max_error_val,
       pix_x_offset_change = pix_x_offset_reval - pix_x_offset_val,
       pix_y_offset_change = pix_y_offset_reval - pix_y_offset_val
     ) %>%
-    relocate(c(avg_error_change, max_error_change, pix_x_offset_change, pix_y_offset_change), .after = id) %>%
+    relocate(
+      c(
+        avg_error_change,
+        max_error_change,
+        pix_x_offset_change,
+        pix_y_offset_change
+      ),
+      .after = id
+    ) %>%
     arrange(abs(avg_error_change))
+}
+
+val_reval_changes_df <- get_val_reval_changes_df(
+  recording_time_df,
+  all_val_reval_df
+)
 
 make_pretty_df(
   val_reval_changes_df
@@ -533,14 +610,14 @@ low_avg_error_df <- val_reval_changes_df %>%
   filter(avg_error_change < 7)
 
 avg_error_corr <- cor.test(
-  low_avg_error_df$avg_error_val, 
+  low_avg_error_df$avg_error_val,
   low_avg_error_df$avg_error_reval,
   method = "pearson",
   use = "complete.obs"
 )
 
 max_error_corr <- cor.test(
-  low_avg_error_df$max_error_val, 
+  low_avg_error_df$max_error_val,
   low_avg_error_df$max_error_reval,
   method = "pearson",
   use = "complete.obs"
@@ -581,49 +658,44 @@ max_error_corr
 
 ``` r
 get_error_correlation_plot <- function(df, measure) {
-  
   ggscatter(
-    data = df, 
-    x = str_glue("{ measure }_error_val"), 
+    data = df,
+    x = str_glue("{ measure }_error_val"),
     y = str_glue("{ measure }_error_reval"),
     add = "reg.line",
     add.params = list(color = "blue", fill = "lightgray"),
     conf.int = TRUE
   ) +
-  coord_fixed(ratio = 1) +
-  geom_abline() +
-  stat_cor(method = "pearson") +
-  theme_classic2() +
-  labs(
-    title = tools::toTitleCase(str_glue("Correlation of { measure } error between validation and revalidation")),
-    x = tools::toTitleCase(str_glue("{ measure } Error of Validation")),
-    y = tools::toTitleCase(str_glue("{ measure } Error of Revalidation"))
-  )
-  
+    coord_fixed(ratio = 1) +
+    geom_abline() +
+    stat_cor(method = "pearson") +
+    theme_classic2() +
+    labs(
+      title = tools::toTitleCase(str_glue("Correlation of { measure } error between validation and revalidation")),
+      x = tools::toTitleCase(str_glue("{ measure } Error of Validation")),
+      y = tools::toTitleCase(str_glue("{ measure } Error of Revalidation"))
+    )
 }
 
 get_offset_correlation_plot <- function(df, measure) {
-  
   ggscatter(
-    data = df, 
-    x = str_glue("pix_{ measure }_offset_val"), 
+    data = df,
+    x = str_glue("pix_{ measure }_offset_val"),
     y = str_glue("pix_{ measure }_offset_reval"),
     add = "reg.line",
     add.params = list(color = "blue", fill = "lightgray"),
     conf.int = TRUE
   ) +
-  stat_cor(method = "pearson") +
-  theme_classic2() +
-  labs(
-    title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) changes between validation and revalidation")),
-    x = tools::toTitleCase(str_glue("{ measure } Offset in Validation (px)")),
-    y = tools::toTitleCase(str_glue("{ measure } Offset in Revalidation (px)"))
-  ) 
-  
+    stat_cor(method = "pearson") +
+    theme_classic2() +
+    labs(
+      title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) changes between validation and revalidation")),
+      x = tools::toTitleCase(str_glue("{ measure } Offset in Validation (px)")),
+      y = tools::toTitleCase(str_glue("{ measure } Offset in Revalidation (px)"))
+    )
 }
 
 get_offset_boxplot <- function(df, group, measure) {
-  
   ggboxplot(
     data = df,
     x = str_glue("{ group }"),
@@ -631,11 +703,10 @@ get_offset_boxplot <- function(df, group, measure) {
     color = str_glue("{ group }"),
     order = c("val", "reval")
   ) +
-  theme_classic2() +
-  labs(
-    title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) from validation to revalidation"))
-  ) 
-  
+    theme_classic2() +
+    labs(
+      title = tools::toTitleCase(str_glue("Pixel offset ({ measure }) from validation to revalidation"))
+    )
 }
 ```
 
@@ -790,7 +861,7 @@ shapiro.test(categorized_offset_df$distance)
 
 ``` r
 wilcox.test(
-  x = val_reval_changes_df$pix_x_offset_val, 
+  x = val_reval_changes_df$pix_x_offset_val,
   y = val_reval_changes_df$pix_x_offset_reval,
   paired = TRUE
 )
@@ -813,7 +884,7 @@ get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "x"
 
 ``` r
 t.test(
-  x = val_reval_changes_df$pix_y_offset_val, 
+  x = val_reval_changes_df$pix_y_offset_val,
   y = val_reval_changes_df$pix_y_offset_reval,
   paired = TRUE
 )
@@ -875,18 +946,19 @@ make_paired_plot <- function(categorized_df, measure) {
     geom_point(size = 1, alpha = 0.5) +
     geom_line(alpha = 0.6, aes(color = !!sym(str_glue("{ measure }_change")))) +
     scale_color_gradient2(low = "red", mid = "gray", high = "blue")
-  return (plt)
+  return(plt)
 }
 ```
 
 #### Offset changes
 
 ``` r
-make_paired_plot(categorized_offset_df, 
-  measure = "x") +
+make_paired_plot(categorized_offset_df,
+  measure = "x"
+) +
   labs(
     title = "Change in X Offset between Validation and Revalidation",
-    #subtitle = "Only Decreases in Average Error",
+    # subtitle = "Only Decreases in Average Error",
     x = "Event Category",
     y = "X Offset (pixels)"
   ) +
@@ -896,11 +968,12 @@ make_paired_plot(categorized_offset_df,
 ![](eyetracker_data_preprocessing_files/figure-gfm/offset-change-paired-plots-1.png)<!-- -->
 
 ``` r
-make_paired_plot(categorized_offset_df, 
-  measure = "y") +
+make_paired_plot(categorized_offset_df,
+  measure = "y"
+) +
   labs(
     title = "Change in Y Offset between Validation and Revalidation",
-    #subtitle = "Only Decreases in Average Error",
+    # subtitle = "Only Decreases in Average Error",
     x = "Event Category",
     y = "Y Offset (pixels)"
   ) +
@@ -910,11 +983,12 @@ make_paired_plot(categorized_offset_df,
 ![](eyetracker_data_preprocessing_files/figure-gfm/offset-change-paired-plots-2.png)<!-- -->
 
 ``` r
-make_paired_plot(categorized_offset_df, 
-  measure = "distance") +
+make_paired_plot(categorized_offset_df,
+  measure = "distance"
+) +
   labs(
     title = "Change in Distance Offset between Validation and Revalidation",
-    #subtitle = "Only Decreases in Average Error",
+    # subtitle = "Only Decreases in Average Error",
     x = "Event Category",
     y = "Distance Offset (pixels)"
   ) +
@@ -927,7 +1001,8 @@ make_paired_plot(categorized_offset_df,
 
 ``` r
 make_paired_plot(categorized_error_df %>% filter(avg_change < 0),
-  measure = "avg") +
+  measure = "avg"
+) +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
     subtitle = "Only Decreases in Average Error",
@@ -941,7 +1016,8 @@ make_paired_plot(categorized_error_df %>% filter(avg_change < 0),
 
 ``` r
 make_paired_plot(categorized_error_df %>% filter(avg_change > 0),
-  measure = "avg") +
+  measure = "avg"
+) +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
     subtitle = "Only Increases in Average Error",
@@ -955,7 +1031,8 @@ make_paired_plot(categorized_error_df %>% filter(avg_change > 0),
 
 ``` r
 make_paired_plot(categorized_error_df %>% filter(id != 11),
-  measure = "avg") +
+  measure = "avg"
+) +
   labs(
     title = "Change in Avg Error between Validation and Revalidation",
     subtitle = "Only Increases in Average Error",
@@ -966,6 +1043,48 @@ make_paired_plot(categorized_error_df %>% filter(id != 11),
 ```
 
 ![](eyetracker_data_preprocessing_files/figure-gfm/error-change-paired-plot-3.png)<!-- -->
+
+## Behavioral data
+
+### Clock sides
+
+Get the clock sides for each participant and create a dataframe of their
+id and side values.
+
+``` r
+CLOCK_LEFT <- 0
+CLOCK_RIGHT <- 1
+
+get_clock_sides <- function(behavioral_df_list) {
+  if ("df" %in% ls()) rm("df")
+  df <- data.frame(id = integer(), side = integer())
+
+  for (i in id_vector) {
+    side <- behavioral_df_list[[i]] %>%
+      slice(1) %>%
+      pull(clock_side)
+    df <- df %>% dplyr::add_row(tibble(id = i, side))
+  }
+
+  return(df)
+}
+
+clock_sides_df <- get_clock_sides(behavioral_df_list)
+
+# Count of left and right clock sides
+make_pretty_df(
+  head(
+    clock_sides_df %>%
+      group_by(side) %>%
+      count()
+  )
+)
+```
+
+| side |  n |
+| ---: | -: |
+|    0 | 16 |
+|    1 | 33 |
 
 ## Samples data
 
@@ -998,37 +1117,129 @@ make_pretty_df(
 | 1,237,312 | 100,000,000.0 | 100,000,000.0 |
 | 1,237,314 | 100,000,000.0 | 100,000,000.0 |
 
-### Extract samples for task duration
+### Constants
 
 ``` r
-FIXED_ID <- 4
 MILLISECONDS_PER_HOUR <- 3600000
 MILLISECONDS_PER_SECONDS <- 1000
-GX_SAMPLE_ERROR_VALUE <- 10^7
-GY_SAMPLE_ERROR_VALUE <- 10^7
 SCREEN_WIDTH_PX <- 1280
 SCREEN_HEIGHT_PX <- 1024
 SCREEN_BIN_WIDTH_PX <- 16
 SCREEN_CENTER_COORD <- c(SCREEN_WIDTH_PX / 2, SCREEN_HEIGHT_PX / 2)
 
+GX_SAMPLE_ERROR_VALUE <- 10^7
+GY_SAMPLE_ERROR_VALUE <- 10^7
+```
+
+### Extract samples for task duration
+
+``` r
 # get the task start time from recordings data embedded in cleaned
 # val_reval changes dataframe
-task_start_time <- val_reval_changes_df %>%
-  filter(id == FIXED_ID) %>%
-  pull(task)
+get_task_start_time <- function(val_reval_changes_df, i) {
+  task_start_time <- val_reval_changes_df %>%
+    filter(id == i) %>%
+    pull(task)
+}
 
 # Filter sample data per participant for the hour duration
 # from start to end of task, then translate and transform
 # frame of reference for time to start at 0 in seconds. Remove
 # all error values for gaze sample and plot
-task_gaze_df <- etd_samples[[FIXED_ID]] %>% 
-  filter(time >= task_start_time & time < task_start_time + MILLISECONDS_PER_HOUR) %>%
-  mutate(time = (time - time[[1]]) / MILLISECONDS_PER_SECONDS) %>%
-  filter(gx < GX_SAMPLE_ERROR_VALUE & gy < GY_SAMPLE_ERROR_VALUE)
+get_task_gaze_df <- function(etd_samples, val_reval_changes_df, id) {
+  task_start_time <- get_task_start_time(val_reval_changes_df, id)
+  task_gaze_df <- etd_samples[[id]] %>%
+    filter(time >= task_start_time & time < task_start_time + MILLISECONDS_PER_HOUR) %>%
+    mutate(time = (time - time[[1]]) / MILLISECONDS_PER_SECONDS) %>%
+    filter(gx < GX_SAMPLE_ERROR_VALUE & gy < GY_SAMPLE_ERROR_VALUE)
+  return(task_gaze_df)
+}
+
+# Get list of task gaze dataframes
+get_task_gaze_df_list <- function(etd_samples, id_vector) {
+  
+  val_reval_changes_df <- get_val_reval_changes_df(
+    recording_time_df,
+    all_val_reval_df
+  )
+  
+  if ("df" %in% ls()) rm("df")
+  df <- data.frame()
+  
+  df_list <- list()
+
+  for (id in id_vector) {
+    df <- get_task_gaze_df(etd_samples, val_reval_changes_df, id)
+    df_list[[id]] <- df
+  }
+
+  return(df_list)
+}
+
+task_gaze_df_list <- get_task_gaze_df_list(etd_samples, id_vector)
+```
+
+### Flip right-side clocks to left side
+
+``` r
+reflect_over_midpoint <- function(point, midpoint) {
+  return(2 * midpoint - point)
+}
+
+right_clocks_df <- clock_sides_df %>%
+  filter(side == CLOCK_RIGHT)
+
+right_clocks_df
+```
+
+    ##    id side
+    ## 1   1    1
+    ## 2   5    1
+    ## 3   6    1
+    ## 4   8    1
+    ## 5   9    1
+    ## 6  11    1
+    ## 7  12    1
+    ## 8  16    1
+    ## 9  20    1
+    ## 10 22    1
+    ## 11 23    1
+    ## 12 25    1
+    ## 13 26    1
+    ## 14 27    1
+    ## 15 29    1
+    ## 16 30    1
+    ## 17 32    1
+    ## 18 33    1
+    ## 19 34    1
+    ## 20 35    1
+    ## 21 37    1
+    ## 22 40    1
+    ## 23 41    1
+    ## 24 42    1
+    ## 25 43    1
+    ## 26 44    1
+    ## 27 45    1
+    ## 28 47    1
+    ## 29 48    1
+    ## 30 51    1
+    ## 31 53    1
+    ## 32 54    1
+    ## 33 57    1
+
+``` r
+#task_gaze_df_list[[2]] %>%
+#  mutate(gx = reflect_over_midpoint(gx, SCREEN_CENTER_COORD[[1]]))
+```
+
+``` r
+FIXED_ID <- 4
+
+task_gaze_df <- task_gaze_df_list[[FIXED_ID]]
 
 plt <- ggplot(task_gaze_df, aes(x = gx, y = gy)) +
-  #xlim(0, SCREEN_WIDTH_PX) +
-  #ylim(0, SCREEN_HEIGHT_PX) +
+  # xlim(0, SCREEN_WIDTH_PX) +
+  # ylim(0, SCREEN_HEIGHT_PX) +
   theme_minimal() +
   labs(
     title = str_glue("Heatmap of gaze samples across task duration for CSN{ str_pad(FIXED_ID, 3, pad = '0') }")
@@ -1045,61 +1256,31 @@ plt <- ggplot(task_gaze_df, aes(x = gx, y = gy)) +
 # 5. Compare distance from clock with and without correction by offset
 # 6. Worth looking at quartiles of average distance per participant
 # 7. Then plot average distance for each participant in a plot
-# 
+#
 # See matlab task code to see where tip of clock hand is at every second
 plt + geom_bin2d(binwidth = c(SCREEN_BIN_WIDTH_PX, SCREEN_BIN_WIDTH_PX))
 ```
 
-![](eyetracker_data_preprocessing_files/figure-gfm/task-gaze-samples-1.png)<!-- -->
+![](eyetracker_data_preprocessing_files/figure-gfm/plot-heatmap-task-gaze-1.png)<!-- -->
 
-## Playground
-
-Things in progress
+## Exclusions by average error threshold
 
 ``` r
 make_pretty_df(
   val_reval_changes_df %>%
-    filter(avg_error_val < 1.5 & avg_error_reval < 1.5)
+    filter(avg_error_val >= 2.5 | avg_error_reval >= 2.5)
 )
 ```
 
-| id | avg\_error\_change | max\_error\_change | pix\_x\_offset\_change | pix\_y\_offset\_change | calibration | validation |       task | revalidation | sttime\_val | quality\_val | avg\_error\_val | max\_error\_val | deg\_offset\_val | pix\_x\_offset\_val | pix\_y\_offset\_val | sttime\_reval | quality\_reval | avg\_error\_reval | max\_error\_reval | deg\_offset\_reval | pix\_x\_offset\_reval | pix\_y\_offset\_reval |
-| -: | -----------------: | -----------------: | ---------------------: | ---------------------: | ----------: | ---------: | ---------: | -----------: | ----------: | :----------- | --------------: | --------------: | ---------------: | ------------------: | ------------------: | ------------: | :------------- | ----------------: | ----------------: | -----------------: | --------------------: | --------------------: |
-| 21 |             \-0.01 |               1.47 |                 \-24.4 |                 \-25.4 |   1,774,038 |  1,774,103 |  2,252,886 |    5,952,349 |   2,095,959 | POOR         |            1.32 |            2.64 |             1.18 |                26.9 |                48.3 |     6,111,905 | POOR           |              1.31 |              4.11 |               0.55 |                   2.5 |                  22.9 |
-| 52 |               0.03 |             \-0.82 |                    2.5 |                   15.4 |   1,304,788 |  1,304,855 |  1,521,416 |    5,176,799 |   1,467,984 | FAIR         |            0.56 |            1.60 |             0.25 |                 3.8 |               \-9.4 |     5,205,726 | GOOD           |              0.59 |              0.78 |               0.21 |                   6.3 |                   6.0 |
-|  4 |               0.04 |               0.07 |                  \-4.7 |                   15.1 |   1,237,276 |  1,237,353 |  1,840,796 |    5,653,681 |   1,769,410 | GOOD         |            0.84 |            1.10 |             0.36 |                15.2 |                 3.2 |     5,689,157 | GOOD           |              0.88 |              1.17 |               0.49 |                  10.5 |                  18.3 |
-| 18 |             \-0.06 |               0.75 |                  \-2.2 |                   34.7 |   1,878,264 |  1,878,319 |  2,176,006 |    5,871,247 |   2,131,274 | FAIR         |            1.06 |            1.72 |             0.76 |                24.4 |              \-18.0 |     5,898,916 | POOR           |              1.00 |              2.47 |               0.73 |                  22.2 |                  16.7 |
-| 38 |             \-0.09 |             \-0.17 |                    5.6 |                    1.0 |   7,163,188 |  7,163,245 |  7,525,292 |   11,157,809 |   7,464,045 | GOOD         |            0.49 |            1.40 |             0.41 |              \-11.9 |              \-14.1 |    11,180,287 | GOOD           |              0.40 |              1.23 |               0.32 |                 \-6.3 |                \-13.1 |
-| 26 |               0.14 |               0.27 |                   20.5 |                 \-17.8 |   2,270,082 |  2,270,145 |  2,675,926 |    6,324,101 |   2,597,140 | GOOD         |            0.58 |            0.97 |             0.46 |              \-15.3 |               \-6.5 |     6,362,123 | GOOD           |              0.72 |              1.24 |               0.59 |                   5.2 |                \-24.3 |
-| 23 |             \-0.15 |               0.22 |                   11.5 |                    3.9 |   1,045,664 |  1,045,729 |  1,247,312 |    4,893,087 |   1,218,359 | FAIR         |            0.96 |            1.93 |             0.93 |              \-12.7 |              \-37.9 |     4,917,114 | POOR           |              0.81 |              2.15 |               0.77 |                 \-1.2 |                \-34.0 |
-| 54 |             \-0.19 |               1.48 |                   29.0 |                   26.6 |     949,944 |    950,013 |  1,503,486 |    5,135,219 |   1,460,781 | FAIR         |            1.01 |            1.57 |             0.67 |              \-16.0 |              \-18.7 |     5,156,673 | POOR           |              0.82 |              3.05 |               0.39 |                  13.0 |                   7.9 |
-|  9 |               0.20 |               0.29 |                   13.0 |                 \-32.4 |  12,714,578 | 12,714,637 | 12,986,604 |   16,661,443 |  12,929,488 | GOOD         |            0.54 |            1.44 |             0.40 |               \-2.4 |                17.9 |    16,683,293 | FAIR           |              0.74 |              1.73 |               0.38 |                  10.6 |                \-14.5 |
-| 12 |             \-0.20 |             \-0.51 |                   10.7 |                   47.7 |   1,124,654 |  1,124,721 |  1,487,916 |    5,160,147 |   1,448,114 | GOOD         |            0.86 |            1.35 |             0.76 |              \-12.6 |              \-26.8 |     5,192,924 | GOOD           |              0.66 |              0.84 |               0.50 |                 \-1.9 |                  20.9 |
-| 43 |               0.21 |               1.39 |                   28.3 |                 \-20.0 |     730,520 |    730,595 |    909,672 |    4,544,091 |     846,280 | GOOD         |            0.68 |            0.98 |             0.33 |               \-8.5 |              \-12.3 |     4,567,038 | POOR           |              0.89 |              2.37 |               0.82 |                  19.8 |                \-32.3 |
-| 39 |               0.22 |               0.25 |                  \-0.1 |                   16.8 |   2,126,800 |  2,126,879 |  2,214,578 |    5,861,623 |   2,164,086 | GOOD         |            0.53 |            0.94 |             0.47 |                16.3 |                 8.3 |     6,143,466 | GOOD           |              0.75 |              1.19 |               0.71 |                  16.2 |                  25.1 |
-| 25 |               0.23 |               0.19 |                    6.6 |                   33.8 |   1,249,028 |  1,249,091 |  1,570,970 |    5,250,885 |   1,471,275 | GOOD         |            0.64 |            0.99 |             0.41 |              \-14.2 |               \-7.4 |     5,292,966 | GOOD           |              0.87 |              1.18 |               0.71 |                 \-7.6 |                  26.4 |
-| 49 |               0.25 |               1.49 |                   16.1 |                    7.1 |   6,982,698 |  6,982,759 |  7,209,750 |   10,834,899 |   7,168,814 | GOOD         |            0.59 |            1.22 |             0.50 |               \-0.8 |                19.4 |    10,854,898 | POOR           |              0.84 |              2.71 |               0.72 |                  15.3 |                  26.5 |
-| 42 |               0.28 |               0.38 |                   10.9 |                 \-33.7 |   2,133,614 |  2,133,673 |  2,390,322 |    6,031,297 |   2,349,859 | GOOD         |            0.55 |            1.40 |             0.31 |               \-7.3 |                10.4 |     6,057,399 | FAIR           |              0.83 |              1.78 |               0.57 |                   3.6 |                \-23.3 |
-|  8 |               0.29 |               2.34 |                   28.7 |                    4.7 |   2,236,502 |  2,236,561 |  2,722,916 |    6,407,267 |   2,661,415 | FAIR         |            0.89 |            1.59 |             0.26 |                 3.2 |                 9.8 |     6,428,591 | POOR           |              1.18 |              3.93 |               1.02 |                  31.9 |                  14.5 |
-| 34 |             \-0.31 |               0.29 |                  \-1.1 |                 \-21.6 |     730,156 |    730,235 |  1,761,032 |    5,407,309 |   1,660,381 | GOOD         |            0.79 |            1.10 |             0.58 |                 8.9 |                23.5 |     5,425,374 | GOOD           |              0.48 |              1.39 |               0.18 |                   7.8 |                   1.9 |
-|  5 |               0.38 |             \-0.08 |                 \-15.6 |                   22.9 |   2,173,786 |  2,173,859 |  2,554,346 |    6,199,151 |   2,499,059 | GOOD         |            0.44 |            1.11 |             0.11 |               \-4.4 |               \-1.9 |     6,269,103 | GOOD           |              0.82 |              1.03 |               0.64 |                \-20.0 |                  21.0 |
-|  6 |               0.41 |               0.56 |                 \-14.1 |                   15.3 |   7,524,796 |  7,524,855 |  7,935,316 |   11,670,985 |   7,870,548 | GOOD         |            0.21 |            0.42 |             0.06 |               \-0.7 |                 2.4 |    11,702,118 | GOOD           |              0.62 |              0.98 |               0.57 |                \-14.8 |                  17.7 |
-| 16 |               0.41 |               8.53 |                   40.9 |                 \-38.2 |   8,007,176 |  8,007,241 |  8,290,424 |   11,953,749 |   8,255,843 | GOOD         |            0.88 |            1.18 |             0.74 |               \-6.4 |                26.1 |    11,979,423 | POOR           |              1.29 |              9.71 |               1.15 |                  34.5 |                \-12.1 |
-| 30 |               0.42 |               0.00 |                    3.3 |                    8.2 |   2,338,996 |  2,339,053 |  2,432,284 |    6,112,299 |   2,381,860 | GOOD         |            0.39 |            0.92 |             0.07 |                 0.1 |                 3.0 |     6,135,741 | GOOD           |              0.81 |              0.92 |               0.26 |                   3.4 |                  11.2 |
-|  7 |               0.46 |               0.90 |                  \-8.0 |                   19.2 |   1,665,884 |  1,665,951 |  2,051,128 |    5,764,131 |   1,975,331 | GOOD         |            0.26 |            0.43 |             0.15 |                 0.4 |                 6.1 |     5,793,871 | GOOD           |              0.72 |              1.33 |               0.64 |                 \-7.6 |                  25.3 |
-| 19 |               0.47 |               0.23 |                   31.6 |                 \-41.8 |   1,512,960 |  1,513,023 |  1,838,636 |    5,466,945 |   1,782,491 | GOOD         |            0.40 |            1.00 |             0.27 |               \-5.4 |                10.8 |     5,517,377 | GOOD           |              0.87 |              1.23 |               0.79 |                  26.2 |                \-31.0 |
-| 44 |               0.48 |               0.77 |                   28.7 |                   22.3 |   2,754,202 |  2,754,261 |  3,025,672 |    6,670,383 |   2,967,643 | FAIR         |            0.61 |            1.65 |             0.17 |               \-3.0 |                 6.1 |     6,724,748 | POOR           |              1.09 |              2.42 |               0.86 |                  25.7 |                  28.4 |
-| 51 |               0.50 |               0.49 |                   11.6 |                   20.8 |     963,978 |    964,039 |  1,162,098 |    4,793,365 |   1,091,056 | GOOD         |            0.57 |            0.79 |             0.44 |                17.1 |                 3.7 |     4,813,281 | FAIR           |              1.07 |              1.28 |               0.93 |                  28.7 |                  24.5 |
-| 41 |               0.63 |               0.73 |                 \-32.7 |                   14.6 |   7,257,234 |  7,257,297 |  7,647,212 |   11,363,419 |   7,490,599 | FAIR         |            0.60 |            1.55 |             0.23 |                10.2 |                 1.6 |    11,476,259 | POOR           |              1.23 |              2.28 |               0.70 |                \-22.5 |                  16.2 |
-| 47 |               0.70 |               2.30 |                   21.9 |                   67.7 |     144,138 |    144,205 |    355,892 |    4,111,473 |     315,401 | GOOD         |            0.70 |            1.36 |             0.35 |                 4.7 |              \-15.7 |     4,132,569 | POOR           |              1.40 |              3.66 |               1.19 |                  26.6 |                  52.0 |
-| 32 |               0.71 |               0.95 |                    4.8 |                 \-36.3 |   2,246,952 |  2,247,023 |  2,450,194 |    6,189,683 |   2,361,135 | GOOD         |            0.57 |            1.19 |             0.36 |              \-11.7 |               \-7.0 |     6,270,702 | POOR           |              1.28 |              2.14 |               1.05 |                 \-6.9 |                \-43.3 |
-| 48 |               0.72 |               0.45 |                   36.8 |                 \-18.6 |     591,876 |    591,941 |  1,039,962 |    4,672,597 |     994,193 | GOOD         |            0.57 |            1.16 |             0.10 |                 3.2 |               \-2.6 |     4,691,363 | FAIR           |              1.29 |              1.61 |               1.13 |                  40.0 |                \-21.2 |
-| 57 |               0.78 |               1.40 |                 \-29.0 |                   38.1 |   6,965,480 |  6,965,545 |  7,173,636 |   11,013,773 |   7,114,193 | GOOD         |            0.51 |            1.25 |             0.11 |               \-2.2 |                 4.1 |    11,031,374 | POOR           |              1.29 |              2.65 |               1.18 |                \-31.2 |                  42.2 |
-| 56 |               0.82 |               0.15 |                  \-4.5 |                   42.8 |     905,592 |    905,671 |  1,072,892 |    4,729,717 |   1,023,642 | FAIR         |            0.33 |            1.57 |             0.22 |                 6.3 |               \-7.0 |     4,788,218 | FAIR           |              1.15 |              1.72 |               0.88 |                   1.8 |                  35.8 |
+| id | avg\_error\_change | max\_error\_change | pix\_x\_offset\_change | pix\_y\_offset\_change | calibration | validation |      task | revalidation | sttime\_val | quality\_val | avg\_error\_val | max\_error\_val | deg\_offset\_val | pix\_x\_offset\_val | pix\_y\_offset\_val | sttime\_reval | quality\_reval | avg\_error\_reval | max\_error\_reval | deg\_offset\_reval | pix\_x\_offset\_reval | pix\_y\_offset\_reval |
+| -: | -----------------: | -----------------: | ---------------------: | ---------------------: | ----------: | ---------: | --------: | -----------: | ----------: | :----------- | --------------: | --------------: | ---------------: | ------------------: | ------------------: | ------------: | :------------- | ----------------: | ----------------: | -----------------: | --------------------: | --------------------: |
+|  2 |               1.41 |               0.38 |                    7.6 |                   92.5 |   1,330,220 |  1,330,285 | 2,036,216 |    5,899,365 |   1,909,910 | POOR         |            1.54 |            3.32 |             0.56 |              \-16.7 |              \-16.3 |     5,928,119 | POOR           |              2.95 |              3.70 |               1.66 |                 \-9.1 |                  76.2 |
+| 27 |               1.74 |               2.19 |                 \-73.9 |                  \-0.1 |   2,756,622 |  2,756,703 | 3,214,436 |    6,853,507 |   3,095,729 | POOR         |            1.59 |            4.61 |             1.43 |              \-39.6 |                44.0 |     6,875,392 | POOR           |              3.33 |              6.80 |               3.15 |               \-113.5 |                  43.9 |
+| 11 |               3.86 |              18.40 |                  111.3 |                 \-83.4 |   1,071,538 |  1,071,611 | 1,346,862 |    5,061,997 |   1,247,087 | POOR         |            0.84 |            3.07 |             0.73 |                17.7 |              \-24.3 |     5,083,297 | POOR           |              4.70 |             21.47 |               4.29 |                 129.0 |               \-107.7 |
 
 ``` r
 df <- val_reval_changes_df %>%
-    filter(avg_error_val < 2.5 & avg_error_reval < 2.5)
+  filter(avg_error_val < 2.5 & avg_error_reval < 2.5)
 
 t.test(df$avg_error_change, mu = 0)
 ```

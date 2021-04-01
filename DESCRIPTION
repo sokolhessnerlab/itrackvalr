@@ -1,6 +1,6 @@
 Package: itrackvalr
 Title: An R Interface to Analyze Value-Based Eye-Tracking Experiments
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: 
     c(person(given = "Ari",
            family = "Dyckovsky",
@@ -23,4 +23,8 @@ Imports:
     config,
     tidyverse,
     ggpubr,
-    magrittr
+    magrittr,
+    targets,
+    tarchetypes,
+    here,
+    matlabr
