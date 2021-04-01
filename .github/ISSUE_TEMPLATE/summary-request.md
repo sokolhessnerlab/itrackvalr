@@ -1,22 +1,34 @@
 ---
 name: Summary request
-about: A collection of questions to summarize a process or outcome
+about: A summary of a process, operation/analysis, or outcome
 title: "[SUMMARY]"
 labels: documentation
 assignees: ''
 
 ---
 
-**Summary description**
+### Summary title
 
-The TL;DR of the summarization request goes here. For example, "Summary of participants who did not complete the task."
+A short phrase describing the summary goes here. For example, "Summary of participants who did not complete the task."
 
-**Questions**
+### Brief summary description
+
+The TL;DR of the summary. A short paragraph (only a few sentences at most), in generalities, describing the contents of the rest of the summary. For example, "Out of 57 participants, 8 did not complete the task. Most incompletions were due difficulties with eye-tracker calibrations, or because participants withdrew due to the intense nature of some of the experimental stimuli."
+
+### Specifics
+All the details, for example subject numbers & reasons for exclusion; estimates and p-values; graphs of results; specific challenges encountered, and how they were dealt with; etc.
 
 - [ ] Question 1
+**Answer:
 - [ ] Question 2
+**Answer:
 - [ ] ...
+**Answer:
 
-**Additional context**
+### Additional context
 
 Any extra context for this summarization needed for completeness goes here.
+
+### Next steps (optional)
+
+Conceptually, what's next? Does this wrap-up this area of inquiry? Is more needed? If an analysis, what questions does this raise that should be addressed by subsequent analyses? 
