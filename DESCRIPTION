@@ -14,7 +14,7 @@ Authors@R:
            comment = c(ORCID = "0000-0003-0895-5576")))
 Description: This interface provides a set of methods to analyze
     data for value-based gaze experiments.
-License: MIT + file LICENSE
+License: MIT + file LICENSE.md
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
