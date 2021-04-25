@@ -13,11 +13,9 @@
 
 # itrackvalr: Toolkit to analyze value by tracking eye gaze (in R)
 
-## About this package
-
 The `itrackvalr` package provides a collection of functions that make it easier to work with the various data sources used in value-based eye-tracking experiments.
 
-### TODO items
+**TODO items**
 
 Plots for each tier of thresholding, such as 1.5 degrees and 2.5 degrees. Write
 summaries of how validation-revalidation participant groups look. Start a separate RMarkdown to generate per-idea summaries.
@@ -76,6 +74,6 @@ Project Link: [https://github.com/sokolhessnerlab/itrackvalr](https://github.com
 [stars-url]: https://github.com/staryourlab/itrackvalr/stargazers
 [issues-shield]: https://img.shields.io/github/issues/sokolhessnerlab/itrackvalr?style=for-the-badge
 [issues-url]: https://github.com/staryourlab/itrackvalr/issues
-[license-shield]: https://img.shields.io/github/license/sokolhessnerlab/git-goals-tutorial?style=for-the-badge
-[license-url]: https://github.com/sokolhessnerlab/git-goals-tutorial/blob/main/LICENSE.md
+[license-shield]: https://img.shields.io/github/license/sokolhessnerlab/itrackvalr?style=for-the-badge
+[license-url]: https://github.com/sokolhessnerlab/itrackvalr/blob/main/LICENSE.md
 
