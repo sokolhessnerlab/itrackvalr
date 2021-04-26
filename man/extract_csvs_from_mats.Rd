@@ -4,9 +4,11 @@
 \alias{extract_csvs_from_mats}
 \title{Run matlab extractor}
 \usage{
-extract_csvs_from_mats(mat_file)
+extract_csvs_from_mats(path_to_raw_data, mat_file)
 }
 \arguments{
+\item{path_to_raw_data}{Character, path to raw data to extract}
+
 \item{mat_file}{Character, file name with extension ".m"}
 }
 \value{
@@ -19,5 +21,5 @@ from MAT files
 \examples{
 library(matlabr)
 library(here)
-extract_csvs_from_mats("edf_mat_to_csv.m")
+extract_csvs_from_mats(here(), "edf_mat_to_csv.m")
 }

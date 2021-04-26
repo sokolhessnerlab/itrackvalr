@@ -3,11 +3,12 @@
 #'   from MAT files
 #' @export
 #' @return 0 for success; 1 for error. see matlbr docs.
+#' @param path_to_raw_data Character, path to raw data to extract
 #' @param mat_file Character, file name with extension ".m"
 #' @examples
 #' library(matlabr)
 #' library(here)
-#' extract_csvs_from_mats("edf_mat_to_csv.m")
+#' extract_csvs_from_mats(here(), "edf_mat_to_csv.m")
 extract_csvs_from_mats <- function(mat_file) {
   # TODO: Add args for data path to CSN instead of hard coded in .m files
   if (matlabr::have_matlab()) {

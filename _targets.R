@@ -1,59 +1,53 @@
 library(targets)
 library(tarchetypes)
-load_all()
-
-# Globals
-
-# Functions
-source("R/functions.R")
 
 # Options
 options(tidyverse.quiet = TRUE)
 
+source('R/functions.R')
+
 # Packages
-tar_option_set(packages = c("tidyverse", "config", "knitr", "kableExtra"))
-
-# TODO: PUT CONFIG STUFF IN A FUNCTION???
-# Top level data path for entry
-data_path <- config$path$data
-
-# Extracted data subdirectory path
-extracted_data_path <- file.path(
-  data_path,
-  config$path$extracted
+tar_option_set(
+  packages = c(
+    "here",
+    "config",
+    "knitr",
+    "kableExtra",
+    "tidyverse",
+    "R.matlab"
+  )
 )
 
-# Extracted eyetracker data subdirectory path
-extracted_eyetracker_data_path <- file.path(
-  extracted_data_path,
-  config$path$eyetracker
-)
+# Config
+config <- config::get()
 
-# Extracted behavioral data subdirectory path
-extracted_behavioral_data_path <- file.path(
-  extracted_data_path,
-  config$path$behavioral
-)
+# Begin attempt at mat file extraction direct from R for targets pipeline
+extract_edf_mat <- function(mat_file) {
+  mat_data <- readMat(mat_file)
+  struct <- mat_data$Edf2Mat
+  struct_data <- struct[,,1]
 
-# Extracted eyetracker data file names (to CSV, from MAT)
-event_csv <- config$extracted_files$eyetracker_event_csv
-sample_csv <- config$extracted_files$eyetracker_sample_csv
-ioevent_csv <- config$extracted_files$eyetracker_ioevent_csv
-recordings_csv <- config$extracted_files$eyetracker_recordings_csv
+  recordings <- struct_data$RECORDINGS
+  recordings_fields <- dimnames(recordings)[[1]]
+  recordings_df <- as.data.frame(t(struct[,,]))
 
-path_to_raw_sample_data <- function() {
-  here(data_path, "raw", "eyetracker", "responses")
+  event <- struct_data$FEVENT
+  event_fields <- dimnames(event)[[1]]
+  event_df <- as.data.frame(t(struct[,,]))
+
+  sample <- struct_data$FSAMPLE
+  sample_fields <- dimnames(sample)[[1]]
+  sample_df <- as.data.frame(t(struct[,,]))
 }
-
-
 
 # Configure pipeline
 list (
-  tar_files(files, list.files(path_to_raw_sample_data())), # need actual vector of file paths
-  tar_target(data,
-             readr::read_csv(files),
-             itrackvalr::load_participant_data(extracted_eyetracker_data_path,
-                                                                 id_vector,
-                                                                 event_csv),
-             pattern = map(files))
+  tar_files(
+    eyetracker_mat_files,
+    list.files(here::here(config$path$data, "raw", "eyetracker", "responses"), full.names = TRUE)
+  ),
+  tar_files(
+    behavioral_mat_files,
+    list.files(here::here(config$path$data, "raw", "behavioral", "responses"), full.names = TRUE)
+  )
 )
