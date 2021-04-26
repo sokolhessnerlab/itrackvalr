@@ -22,6 +22,7 @@ tar_option_set(
 config <- config::get()
 
 # Begin attempt at mat file extraction direct from R for targets pipeline
+# Potential extractor method for v5 MAT files: https://stackoverflow.com/questions/58418852/how-to-import-matlab-table-cell-structure-to-r-dataframe-while-conserving-pr
 extract_edf_mat <- function(mat_file) {
   mat_data <- readMat(mat_file)
   struct <- mat_data$Edf2Mat
@@ -29,15 +30,15 @@ extract_edf_mat <- function(mat_file) {
 
   recordings <- struct_data$RECORDINGS
   recordings_fields <- dimnames(recordings)[[1]]
-  recordings_df <- as.data.frame(t(struct[,,]))
+  recordings_df <- as.data.frame(t(recordings[,,]))
 
   event <- struct_data$FEVENT
   event_fields <- dimnames(event)[[1]]
-  event_df <- as.data.frame(t(struct[,,]))
+  event_df <- as.data.frame(t(event[,,]))
 
   sample <- struct_data$FSAMPLE
   sample_fields <- dimnames(sample)[[1]]
-  sample_df <- as.data.frame(t(struct[,,]))
+  sample_df <- as.data.frame(t(sample[,,]))
 }
 
 # Configure pipeline
