@@ -11,6 +11,8 @@ Ari Dyckovsky
         settings](#participant-identification-settings)
   - [Load extracted data](#load-extracted-data)
   - [Clock sides](#clock-sides)
+      - [Flip right-side clocks to left
+        side](#flip-right-side-clocks-to-left-side)
 
 ## Setup
 
@@ -149,3 +151,25 @@ make_pretty_df(
 
 | side | n |
 | ---: | -: |
+
+### Flip right-side clocks to left side
+
+``` r
+reflect_over_midpoint <- function(point, midpoint) {
+  return(2 * midpoint - point)
+}
+
+right_clocks_df <- clock_sides_df %>%
+  filter(side == CLOCK_RIGHT) %>%
+  mutate(side = as.integer(side))
+
+right_clocks_df
+```
+
+    ## [1] id   side
+    ## <0 rows> (or 0-length row.names)
+
+``` r
+#task_gaze_df_list[[2]] %>%
+#  mutate(gx = reflect_over_midpoint(gx, SCREEN_CENTER_COORD[[1]]))
+```

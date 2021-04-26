@@ -786,21 +786,6 @@ get_task_gaze_df_list <- function(etd_samples, id_vector) {
 task_gaze_df_list <- get_task_gaze_df_list(etd_samples, id_vector)
 ```
 
-### Flip right-side clocks to left side
-
-```{r}
-reflect_over_midpoint <- function(point, midpoint) {
-  return(2 * midpoint - point)
-}
-
-right_clocks_df <- clock_sides_df %>%
-  filter(side == CLOCK_RIGHT)
-
-right_clocks_df
-#task_gaze_df_list[[2]] %>%
-#  mutate(gx = reflect_over_midpoint(gx, SCREEN_CENTER_COORD[[1]]))
-```
-
 ```{r, plot-heatmap-task-gaze}
 FIXED_ID <- 4
 
