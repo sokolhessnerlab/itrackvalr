@@ -1,5 +1,6 @@
 library(targets)
 library(tarchetypes)
+load_all()
 
 # Globals
 
@@ -40,7 +41,19 @@ sample_csv <- config$extracted_files$eyetracker_sample_csv
 ioevent_csv <- config$extracted_files$eyetracker_ioevent_csv
 recordings_csv <- config$extracted_files$eyetracker_recordings_csv
 
+path_to_raw_sample_data <- function() {
+  here(data_path, "raw", "eyetracker", "responses")
+}
+
+
+
 # Configure pipeline
 list (
-  tar_target()
+  tar_files(files, list.files(path_to_raw_sample_data())), # need actual vector of file paths
+  tar_target(data,
+             readr::read_csv(files),
+             itrackvalr::load_participant_data(extracted_eyetracker_data_path,
+                                                                 id_vector,
+                                                                 event_csv),
+             pattern = map(files))
 )
