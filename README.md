@@ -38,6 +38,12 @@ git clone https://github.com/sokolhessnerlab/itrackvalr.git
 
 Then, open the `itrackvalr` directory and double-click on `itrackvalr.Rproj` to launch the project in RStudio. When RStudio first loads the project, it will source the included `.RProfile` to configure helpful defaults for your session.
 
+### Participant data
+
+For the current studies, participant data is stored on a shared drive at the University of Denver. If you plan to work with participant data during your session, you must connect to the data separately from this package from whichever machine you are working from.
+
+If working remotely, a secure connection to participant data requires connecting to the DU VPN and then mounting the shared drive to your computer.
+
 ## Code of Conduct
 
 We are committed to fostering a welcoming community for the `itrackvalr` package.
