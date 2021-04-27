@@ -1,8 +1,12 @@
 library(targets)
 library(tarchetypes)
+library(future)
+library(R.matlab)
 
 # Options
 options(tidyverse.quiet = TRUE)
+
+future::plan(future::multisession)
 
 source('R/functions.R')
 
@@ -30,15 +34,17 @@ extract_edf_mat <- function(mat_file) {
 
   recordings <- struct_data$RECORDINGS
   recordings_fields <- dimnames(recordings)[[1]]
-  recordings_df <- as.data.frame(t(recordings[,,]))
+  recordings_temp_df <- as.data.frame(t(recordings[,,]))
+  recordings_df <- as_tibble(lapply(recordings_temp_df, unlist))
 
   event <- struct_data$FEVENT
   event_fields <- dimnames(event)[[1]]
-  event_df <- as.data.frame(t(event[,,]))
+  event_temp_df <- as.data.frame(t(event[,,]))
+  event_df <- as_tibble(lapply(purrr::map_depth(e_df, 2, ~ifelse(is.null(.x), NA, .x)), unlist, use.names = FALSE))
 
-  sample <- struct_data$FSAMPLE
-  sample_fields <- dimnames(sample)[[1]]
-  sample_df <- as.data.frame(t(sample[,,]))
+  #sample <- struct_data$FSAMPLE
+  #sample_fields <- dimnames(sample)[[1]]
+  #sample_df <- as.data.frame(t(sample[,,]))
 }
 
 # Configure pipeline
