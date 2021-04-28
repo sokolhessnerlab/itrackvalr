@@ -38,6 +38,16 @@ git clone https://github.com/sokolhessnerlab/itrackvalr.git
 
 Then, open the `itrackvalr` directory and double-click on `itrackvalr.Rproj` to launch the project in RStudio. When RStudio first loads the project, it will source the included `.RProfile` to configure helpful defaults for your session.
 
+### Loading package dependencies
+
+We use the [`renv` package](https://rstudio.github.io/renv/index.html) to manage packages used for developing and using `itrackvalr`. To install the package dependencies for this project, run the following restoration command in the R console.
+
+```r
+renv::restore()
+```
+
+The dependencies are tracked by version in the `renv.lock` file. If during development you install a package that the project will depend on to run properly, please use `renv::snaptshot()` to update the lock file.
+
 ### Participant data
 
 For the current studies, participant data is stored on a shared drive at the University of Denver. If you plan to work with participant data during your session, you must connect to the data separately from this package from whichever machine you are working from.
