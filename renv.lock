@@ -30,6 +30,13 @@
       "Repository": "CRAN",
       "Hash": "a7d6660c869d4f41f856504828af4645"
     },
+    "KernSmooth": {
+      "Package": "KernSmooth",
+      "Version": "2.23-18",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9e703ad8bf0e99f3691f05da32dfe68b"
+    },
     "MASS": {
       "Package": "MASS",
       "Version": "7.3-53.1",
@@ -191,6 +198,20 @@
       "Repository": "CRAN",
       "Hash": "06015476250468fc013c30022118ce3a"
     },
+    "bs4Dash": {
+      "Package": "bs4Dash",
+      "Version": "0.5.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9f36dfae17465b995101258e4016e8f8"
+    },
+    "bslib": {
+      "Package": "bslib",
+      "Version": "0.2.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4830a372b241d78ed6f53731ee3023ac"
+    },
     "cachem": {
       "Package": "cachem",
       "Version": "1.0.4",
@@ -226,6 +247,20 @@
       "Repository": "CRAN",
       "Hash": "f61dbaec772ccd2e17705c1e872e9e7c"
     },
+    "checkmate": {
+      "Package": "checkmate",
+      "Version": "2.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a667800d5f0350371bedeb8b8b950289"
+    },
+    "class": {
+      "Package": "class",
+      "Version": "7.3-18",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "15ef288688a6919417ade6251deea2b3"
+    },
     "cli": {
       "Package": "cli",
       "Version": "2.5.0",
@@ -246,6 +281,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "ce49bfe5bc0b3ecd43a01fe1b01c2243"
+    },
+    "clustermq": {
+      "Package": "clustermq",
+      "Version": "0.8.95.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "385cd5623e6f8f27dc79437398dceed1"
     },
     "codetools": {
       "Package": "codetools",
@@ -562,6 +604,13 @@
       "Repository": "CRAN",
       "Hash": "7d7f283939f563670a697165b2cf5560"
     },
+    "gt": {
+      "Package": "gt",
+      "Version": "0.2.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4eb28493ed31ff8f5f240d0fb5929ecb"
+    },
     "gtable": {
       "Package": "gtable",
       "Version": "0.3.0",
@@ -611,6 +660,13 @@
       "Repository": "CRAN",
       "Hash": "6fdaa86d0700f8b3e92ee3c445a5a10d"
     },
+    "httpuv": {
+      "Package": "httpuv",
+      "Version": "1.6.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "781248b864d00c390830504937fe5c29"
+    },
     "httr": {
       "Package": "httr",
       "Version": "1.4.2",
@@ -645,6 +701,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "b2008df40fb297e3fef135c7e8eeec1a"
+    },
+    "jquerylib": {
+      "Package": "jquerylib",
+      "Version": "0.1.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5aab57a3bd297eee1c1d862735972182"
     },
     "jsonlite": {
       "Package": "jsonlite",
@@ -800,6 +863,13 @@
       "Repository": "CRAN",
       "Hash": "6dfe8bf774944bd5595785e3229d8771"
     },
+    "narray": {
+      "Package": "narray",
+      "Version": "0.4.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b275f9d21e812b6338f4c3e9d70b2209"
+    },
     "nlme": {
       "Package": "nlme",
       "Version": "3.1-152",
@@ -862,6 +932,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "a8c755912ae31910ba6a5d42f5526b6b"
+    },
+    "pingr": {
+      "Package": "pingr",
+      "Version": "2.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e293e79be42ffd336d938937fd3017fb"
     },
     "pkgbuild": {
       "Package": "pkgbuild",
@@ -1045,6 +1122,13 @@
       "Repository": "CRAN",
       "Hash": "fcd94e00cc409b25d07ca50f7bf339f5"
     },
+    "rpart": {
+      "Package": "rpart",
+      "Version": "4.1-15",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9787c1fcb680e655d062e7611cadf78e"
+    },
     "rprojroot": {
       "Package": "rprojroot",
       "Version": "2.0.2",
@@ -1080,6 +1164,13 @@
       "Repository": "CRAN",
       "Hash": "74b905b0076e1de6e27f540c95ba68d5"
     },
+    "sass": {
+      "Package": "sass",
+      "Version": "0.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3ef1adfe46b7b144b970d74ce33ab0d6"
+    },
     "scales": {
       "Package": "scales",
       "Version": "1.1.1",
@@ -1101,12 +1192,47 @@
       "Repository": "CRAN",
       "Hash": "308013098befe37484df72c39cf90d6e"
     },
+    "shiny": {
+      "Package": "shiny",
+      "Version": "1.6.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6e3b6ae7fe02b5859e4bb277f218b8ae"
+    },
+    "shinyWidgets": {
+      "Package": "shinyWidgets",
+      "Version": "0.6.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7dd5f3ee96c64a47fdbc6e437ff1c7e1"
+    },
+    "shinycssloaders": {
+      "Package": "shinycssloaders",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f39bb3c44a9b496723ec7e86f9a771d8"
+    },
+    "sourcetools": {
+      "Package": "sourcetools",
+      "Version": "0.1.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "947e4e02a79effa5d512473e10f41797"
+    },
     "sp": {
       "Package": "sp",
       "Version": "1.4-5",
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "dfd843ee98246cf932823acf613b05dd"
+    },
+    "spatial": {
+      "Package": "spatial",
+      "Version": "7.3-13",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8d0918547149f72e78ae942ccd1fdbc7"
     },
     "statmod": {
       "Package": "statmod",
@@ -1303,6 +1429,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "6c85f015dee9cc7710ddd20f86881f58"
+    },
+    "xtable": {
+      "Package": "xtable",
+      "Version": "1.8-4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b8acdf8af494d9ec19ccb2481a9b11c2"
     },
     "yaml": {
       "Package": "yaml",
