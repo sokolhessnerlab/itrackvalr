@@ -1,8 +1,8 @@
-library("targets")
-library("tarchetypes")
-library("future")
-library("future.callr")
-library("R.matlab")
+library(targets)
+library(tarchetypes)
+library(future)
+library(R.matlab)
+library(tibble)
 
 # Options
 options(tidyverse.quiet = TRUE)
@@ -12,6 +12,7 @@ plan(multisession)
 
 # Load functions
 source('R/extract.R')
+source('R/clean.R')
 
 # Packages
 tar_option_set(
@@ -28,40 +29,38 @@ tar_option_set(
 # Config
 config <- config::get()
 
-# Configure pipeline
-list (
-  # Get list of full file paths to raw eyetracker data per participant
-  tar_files_input(
-    raw_eyetracker_mat,
-    list.files(here::here(config$path$data, "raw", "eyetracker", "responses"), full.names = TRUE),
-    format = "file"
-  ),
-  # Get list of full file paths to raw behavioral data per participant
-  tar_files_input(
-    raw_behavioral_mat,
-    list.files(here::here(config$path$data, "raw", "behavioral", "responses"), full.names = TRUE),
-    format = "file"
-  ),
-  # Extract and store behavioral data as a CSV. Returns path to CSV.
-  tar_target(
-    extracted_behavioral_csv_path,
-    extract_behavioral_data(raw_behavioral_mat),
-    pattern = map(raw_behavioral_mat),
-    format = "file"
+# Create a dataframe of participants' meta information using raw behavioral data response file names
+participants <- tibble(
+  id = list.files(here::here(config$path$data, "raw", "behavioral", "responses")) %>%
+    purrr::map(~ stringr::str_extract(.x, "CSN\\d{3}"))
+)
+
+list(
+  # Per participant mapping of targets using static branching for better manifest output
+  tar_map(
+    values = participants,
+
+    # Set raw behavioral file targets
+    # TODO: change the `str_subset(...` to a function!
+    tar_target(
+      raw_behavioral_file,
+      str_subset(list.files(here::here(config$path$data, "raw", "behavioral", "responses"), full.names = TRUE), id),
+      format = "file"
+    ),
+
+    # Set raw eyetracker file targets
+    # TODO: change the `str_subset(...` to a function!
+    tar_target(
+      raw_eyetracker_file,
+      str_subset(list.files(here::here(config$path$data, "raw", "eyetracker", "responses"), full.names = TRUE), id),
+      format = "file"
+    ),
+
+    # Extract behavioral CSV files and output path to them
+    tar_target(
+      extracted_behavioral_csv_file,
+      extract_behavioral_data(raw_behavioral_file),
+      format = "file"
+    )
   )
-  #tar_target(
-    #extracted_eyetracker_data,
-    #extract_eyetracker_data(raw_eyetracker_mat_files),
-    #pattern = map(raw_eyetracker_mat_files)
-  #),
-  #tar_target(
-    #extracted_recordings_data,
-    #extract_recordings_data(extracted_eyetracker_data),
-    #pattern = map(extracted_eyetracker_data)
-  #),
-  #tar_target(
-    #extracted_fevent_data,
-    #extract_fevent_data(extracted_eyetracker_data),
-    #pattern = map(extracted_eyetracker_data)
-  #)
 )

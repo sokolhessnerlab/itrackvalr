@@ -13,8 +13,8 @@ clean_behavioral_data <- function(csv_file, id_prefix = "CSN") {
   df <- read_csv(csv_file)
 
   # TODO
-  df <- df %>%
-    mutate(is_double_tick = step_type > 1) # mutate step type to a boolean for double tick
+  #df <- df %>%
+   # mutate(is_double_tick = step_type > 1) # mutate step type to a boolean for double tick
 
   # Construct output file
   output_file <- str_c(here::here(config$path$data, "clean", "behavioral", padded_id), ".csv")

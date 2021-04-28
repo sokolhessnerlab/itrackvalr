@@ -8,7 +8,7 @@
 #' @export
 extract_behavioral_data <- function(mat_file, id_prefix = "CSN") {
   # Get the padded 3-digit id from the file name, including a prefix
-  padded_id <- str_extract(mat_file, str_c(id_prefix,"\\d{3}"))
+  participant_id <- str_extract(mat_file, str_c(id_prefix,"\\d{3}"))
 
   # Read MAT file and extract subject data
   mat_data <- readMat(mat_file)
@@ -18,6 +18,7 @@ extract_behavioral_data <- function(mat_file, id_prefix = "CSN") {
   # Extract struct fields into dataframe
   df <- tibble(
     trial = 1:struct_data$nTrials,
+    id = participant_id, # add the id; may need to make it just integer at some point
     p_signal = struct_data$pSignal[1],
     clock_side = struct_data$lr[1],
     resp_type = struct_data$resps[,1],
@@ -30,7 +31,7 @@ extract_behavioral_data <- function(mat_file, id_prefix = "CSN") {
   )
 
   # Construct output file
-  output_file <- str_c(here::here(config$path$data, "extracted", "behavioral", padded_id), ".csv")
+  output_file <- str_c(here::here(config$path$data, "extracted", "behavioral", participant_id), ".csv")
 
   # Write dataframe to output file
   write_csv(df, output_file)
