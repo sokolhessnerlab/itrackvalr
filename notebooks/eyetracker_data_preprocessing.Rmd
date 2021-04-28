@@ -11,14 +11,6 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
-
-make_pretty_df <- function(df) {
-  if (isTRUE(getOption("knitr.in.progress"))) {
-    knitr::kable(df, "simple", format.args = list(big.mark = ",", scientific = FALSE))
-  } else {
-    df
-  }
-}
 ```
 
 ## Setup
@@ -107,102 +99,34 @@ participant_id_max <- config$participant_id$max
 
 ## Load extracted data
 
-### Define loading methods for CSVs
+Start by establishing a vectorized key of integer identifiers for study participants.
+These ids reflect only participants who completed all required elements of the task.
 
-```{r, define-loading-methods}
-min_id <- participant_id_min
-max_id <- participant_id_max
-
-get_path_to_id <- function(path_to_dir, id) {
-  padded_id <- stringr::str_pad(id,
-    participant_id_pad_length,
-    pad = participant_id_pad_character
-  )
-  participant_id <- stringr::str_c(participant_id_prefix, padded_id)
-  return(
-    file.path(
-      path_to_dir,
-      participant_id
-    )
-  )
-}
-
-get_id_vector <- function(path_to_dir) {
-  # Gets a vector of id integers for participants relative
-  # to the existence of that participant's data (some participants
-  # are not converted from raw MAT data to CSVs if not considered
-  # a complete participant)
-  id_vector <- c()
-  for (i in min_id:max_id) {
-    if (dir.exists(get_path_to_id(path_to_dir, i))) {
-      id_vector <- c(id_vector, i)
-    }
-  }
-  return(id_vector)
-}
-
-#' Read a directory of files, or directory of directories of files specifying
-#' a specific commanly-named file, into a dataframe list.
-#'
-#' @param path_to_dir A path string to a directory of CSV data
-#' @param id_vector A vector of participant IDs as integers
-#' @param filename_csv A string name for a file type, including extension.
-#'
-#' @examples
-#' load_participant_data(extracted_eyetracker_data_path, id_vector, event_csv)
-load_participant_data <- function(path_to_dir, id_vector, filename_csv) {
-  # TODO: Include column specfications by type of loading.
-  if ("df" %in% ls()) rm("df")
-  df <- data.frame()
-
-  df_list <- list()
-
-  for (id in id_vector) {
-    if (is_missing(filename_csv)) {
-      # Path to file of the participant data as a CSV, such as `path/to/CSN004.csv`.
-      path_to_file <- stringr::str_c(get_path_to_id(path_to_dir, id), ".csv")
-    } else {
-      # Path to files nested within a participant-identified directory, such
-      # as with eyetracking data that is split into multiple CSVs, which may
-      # be `path/to/CSN004/data.csv`.
-      path_to_file <- file.path(get_path_to_id(path_to_dir, id), filename_csv)
-    }
-
-    df <- readr::read_csv(path_to_file)
-    df_list[[id]] <- df
-  }
-
-  return(df_list)
-}
-
+```{r, get-id-vector}
 # Convenience instantiation of the id vector for later use. Can use
 # the getter method at any point for same output. Note: This uses the
 # extracted eyetracker data path.
-id_vector <- get_id_vector(extracted_eyetracker_data_path)
+id_vector <- itrackvalr::get_id_vector(extracted_eyetracker_data_path,
+                                       participant_id_min,
+                                       participant_id_max)
 ```
 
-### Load eyetracking data for each participant
-
-The following chunk loads CSVs for participants' event, recordings, and sample data
-and then assigns a list of these loaded dataframes to the approriate `etd_*` variable.
+Then, load eyetracking data for each participant. The following chunk calls `itrackvalr` functions to load CSVs for participants' eye-tracking data for
+  - event, 
+  - recordings
+  - sample
+and then we assign lists of these loaded dataframes to the approriate `etd_*` variable.
 
 ```{r, load-etd-lists, message=FALSE}
-etd_events <- load_participant_data(extracted_eyetracker_data_path, id_vector, event_csv)
-etd_recordings <- load_participant_data(extracted_eyetracker_data_path, id_vector, recordings_csv)
-etd_samples <- load_participant_data(
-  extracted_eyetracker_data_path,
-  id_vector,
-  sample_csv
-)
-```
-
-### Load all behavioral data for each participant
-
-The following chunk loads CSVs for participants' behavioral data data
-and then assigns a list of these loaded dataframes to `behavioral_df_list`.
-
-``````{r, load-behavioral-list, message=FALSE}
-behavioral_df_list <- load_participant_data(extracted_behavioral_data_path, id_vector)
+etd_events <- itrackvalr::load_participant_data(extracted_eyetracker_data_path,
+                                                id_vector,
+                                                event_csv)
+etd_recordings <- itrackvalr::load_participant_data(extracted_eyetracker_data_path,
+                                                    id_vector,
+                                                    recordings_csv)
+etd_samples <- itrackvalr::load_participant_data(extracted_eyetracker_data_path,
+                                                 id_vector,
+                                                 sample_csv)
 ```
 
 ## Events data
@@ -792,43 +716,6 @@ make_paired_plot(categorized_error_df %>% filter(id != 11),
   theme_classic2()
 ```
 
-## Behavioral data
-
-### Clock sides
-
-Get the clock sides for each participant and create a dataframe of
-their id and side values.
-
-```{r, clock-sides}
-CLOCK_LEFT <- 0
-CLOCK_RIGHT <- 1
-
-get_clock_sides <- function(behavioral_df_list) {
-  if ("df" %in% ls()) rm("df")
-  df <- data.frame(id = integer(), side = integer())
-
-  for (i in id_vector) {
-    side <- behavioral_df_list[[i]] %>%
-      slice(1) %>%
-      pull(clock_side)
-    df <- df %>% dplyr::add_row(tibble(id = i, side))
-  }
-
-  return(df)
-}
-
-clock_sides_df <- get_clock_sides(behavioral_df_list)
-
-# Count of left and right clock sides
-make_pretty_df(
-  head(
-    clock_sides_df %>%
-      group_by(side) %>%
-      count()
-  )
-)
-```
-
 ## Samples data
 
 ```{r, preview-sample}
@@ -897,21 +784,6 @@ get_task_gaze_df_list <- function(etd_samples, id_vector) {
 }
 
 task_gaze_df_list <- get_task_gaze_df_list(etd_samples, id_vector)
-```
-
-### Flip right-side clocks to left side
-
-```{r}
-reflect_over_midpoint <- function(point, midpoint) {
-  return(2 * midpoint - point)
-}
-
-right_clocks_df <- clock_sides_df %>%
-  filter(side == CLOCK_RIGHT)
-
-right_clocks_df
-#task_gaze_df_list[[2]] %>%
-#  mutate(gx = reflect_over_midpoint(gx, SCREEN_CENTER_COORD[[1]]))
 ```
 
 ```{r, plot-heatmap-task-gaze}

@@ -10,12 +10,6 @@ Ari Dyckovsky
       - [Participant identification
         settings](#participant-identification-settings)
   - [Load extracted data](#load-extracted-data)
-      - [Define loading methods for
-        CSVs](#define-loading-methods-for-csvs)
-      - [Load eyetracking data for each
-        participant](#load-eyetracking-data-for-each-participant)
-      - [Load all behavioral data for each
-        participant](#load-all-behavioral-data-for-each-participant)
   - [Events data](#events-data)
       - [Methods using `etd_events` list of loaded
         dataframes](#methods-using-etd_events-list-of-loaded-dataframes)
@@ -35,14 +29,10 @@ Ari Dyckovsky
       - [Paired Plots](#paired-plots)
       - [Paired plots for validation-revalidation
         changes](#paired-plots-for-validation-revalidation-changes)
-  - [Behavioral data](#behavioral-data)
-      - [Clock sides](#clock-sides)
   - [Samples data](#samples-data)
       - [Constants](#constants)
       - [Extract samples for task
         duration](#extract-samples-for-task-duration)
-      - [Flip right-side clocks to left
-        side](#flip-right-side-clocks-to-left-side)
   - [Exclusions by average error
     threshold](#exclusions-by-average-error-threshold)
 
@@ -135,104 +125,34 @@ participant_id_max <- config$participant_id$max
 
 ## Load extracted data
 
-### Define loading methods for CSVs
+Start by establishing a vectorized key of integer identifiers for study
+participants. These ids reflect only participants who completed all
+required elements of the task.
 
 ``` r
-min_id <- participant_id_min
-max_id <- participant_id_max
-
-get_path_to_id <- function(path_to_dir, id) {
-  padded_id <- stringr::str_pad(id,
-    participant_id_pad_length,
-    pad = participant_id_pad_character
-  )
-  participant_id <- stringr::str_c(participant_id_prefix, padded_id)
-  return(
-    file.path(
-      path_to_dir,
-      participant_id
-    )
-  )
-}
-
-get_id_vector <- function(path_to_dir) {
-  # Gets a vector of id integers for participants relative
-  # to the existence of that participant's data (some participants
-  # are not converted from raw MAT data to CSVs if not considered
-  # a complete participant)
-  id_vector <- c()
-  for (i in min_id:max_id) {
-    if (dir.exists(get_path_to_id(path_to_dir, i))) {
-      id_vector <- c(id_vector, i)
-    }
-  }
-  return(id_vector)
-}
-
-#' Read a directory of files, or directory of directories of files specifying
-#' a specific commanly-named file, into a dataframe list.
-#'
-#' @param path_to_dir A path string to a directory of CSV data
-#' @param id_vector A vector of participant IDs as integers
-#' @param filename_csv A string name for a file type, including extension.
-#'
-#' @examples
-#' load_participant_data(extracted_eyetracker_data_path, id_vector, event_csv)
-load_participant_data <- function(path_to_dir, id_vector, filename_csv) {
-  # TODO: Include column specfications by type of loading.
-  if ("df" %in% ls()) rm("df")
-  df <- data.frame()
-
-  df_list <- list()
-
-  for (id in id_vector) {
-    if (is_missing(filename_csv)) {
-      # Path to file of the participant data as a CSV, such as `path/to/CSN004.csv`.
-      path_to_file <- stringr::str_c(get_path_to_id(path_to_dir, id), ".csv")
-    } else {
-      # Path to files nested within a participant-identified directory, such
-      # as with eyetracking data that is split into multiple CSVs, which may
-      # be `path/to/CSN004/data.csv`.
-      path_to_file <- file.path(get_path_to_id(path_to_dir, id), filename_csv)
-    }
-
-    df <- readr::read_csv(path_to_file)
-    df_list[[id]] <- df
-  }
-
-  return(df_list)
-}
-
 # Convenience instantiation of the id vector for later use. Can use
 # the getter method at any point for same output. Note: This uses the
 # extracted eyetracker data path.
-id_vector <- get_id_vector(extracted_eyetracker_data_path)
+id_vector <- itrackvalr::get_id_vector(extracted_eyetracker_data_path,
+                                       participant_id_min,
+                                       participant_id_max)
 ```
 
-### Load eyetracking data for each participant
-
-The following chunk loads CSVs for participants’ event, recordings, and
-sample data and then assigns a list of these loaded dataframes to the
-approriate `etd_*` variable.
-
-``` r
-etd_events <- load_participant_data(extracted_eyetracker_data_path, id_vector, event_csv)
-etd_recordings <- load_participant_data(extracted_eyetracker_data_path, id_vector, recordings_csv)
-etd_samples <- load_participant_data(
-  extracted_eyetracker_data_path,
-  id_vector,
-  sample_csv
-)
-```
-
-### Load all behavioral data for each participant
-
-The following chunk loads CSVs for participants’ behavioral data data
-and then assigns a list of these loaded dataframes to
-`behavioral_df_list`.
+Then, load eyetracking data for each participant. The following chunk
+calls `itrackvalr` functions to load CSVs for participants’ eye-tracking
+data for - event, - recordings - sample and then we assign lists of
+these loaded dataframes to the approriate `etd_*` variable.
 
 ``` r
-behavioral_df_list <- load_participant_data(extracted_behavioral_data_path, id_vector)
+etd_events <- itrackvalr::load_participant_data(extracted_eyetracker_data_path,
+                                                id_vector,
+                                                event_csv)
+etd_recordings <- itrackvalr::load_participant_data(extracted_eyetracker_data_path,
+                                                    id_vector,
+                                                    recordings_csv)
+etd_samples <- itrackvalr::load_participant_data(extracted_eyetracker_data_path,
+                                                 id_vector,
+                                                 sample_csv)
 ```
 
 ## Events data
@@ -408,12 +328,12 @@ recording_time_df_minutes <- get_recording_time_df(id_vector, 1000 * 60)
 sort(recording_time_df_seconds$revalidation - recording_time_df_seconds$task - 3600)
 ```
 
-    ##  [1]  25.149  28.309  31.267  31.483  31.733  32.517  32.635  33.821  34.419
-    ## [10]  38.285  39.071  39.623  40.975  44.711  44.805  45.775  45.877  46.277
-    ## [19]  47.045  48.175  49.093  49.677  50.481  52.581  53.299  55.383  56.825
-    ## [28]  59.169  63.325  64.039  72.231  73.695  74.839  79.483  79.915  80.015
-    ## [37]  84.351  95.241  99.463 113.003 115.135 116.207 135.669 139.489 145.689
-    ## [46] 155.581 212.885 240.137 263.149
+    ##  [1]  22.007  25.149  28.309  31.267  31.483  31.733  32.517  32.635  33.821
+    ## [10]  34.419  38.285  39.071  39.623  40.975  44.711  44.805  45.775  45.877
+    ## [19]  46.277  47.045  48.175  49.093  49.677  50.481  52.581  53.299  55.383
+    ## [28]  56.825  59.169  63.325  64.039  72.231  73.695  74.839  79.483  79.915
+    ## [37]  80.015  84.351  95.241  99.463 113.003 115.135 116.207 135.669 139.489
+    ## [46] 145.689 155.581 212.885 240.137 263.149
 
 ## Evaluate validation and revalidation quality
 
@@ -554,6 +474,7 @@ make_pretty_df(
 |  4 |               0.04 |               0.07 |                  \-4.7 |                   15.1 |   1,237,276 |  1,237,353 |  1,840,796 |    5,653,681 |   1,769,410 | GOOD         |            0.84 |            1.10 |             0.36 |                15.2 |                 3.2 |     5,689,157 | GOOD           |              0.88 |              1.17 |               0.49 |                  10.5 |                  18.3 |
 | 18 |             \-0.06 |               0.75 |                  \-2.2 |                   34.7 |   1,878,264 |  1,878,319 |  2,176,006 |    5,871,247 |   2,131,274 | FAIR         |            1.06 |            1.72 |             0.76 |                24.4 |              \-18.0 |     5,898,916 | POOR           |              1.00 |              2.47 |               0.73 |                  22.2 |                  16.7 |
 | 38 |             \-0.09 |             \-0.17 |                    5.6 |                    1.0 |   7,163,188 |  7,163,245 |  7,525,292 |   11,157,809 |   7,464,045 | GOOD         |            0.49 |            1.40 |             0.41 |              \-11.9 |              \-14.1 |    11,180,287 | GOOD           |              0.40 |              1.23 |               0.32 |                 \-6.3 |                \-13.1 |
+| 13 |               0.13 |               0.15 |                 \-10.1 |                  \-0.8 |   1,958,456 |  1,958,517 |  2,128,652 |    5,750,659 |   2,080,009 | FAIR         |            0.41 |            1.66 |             0.17 |               \-1.2 |                 7.0 |     5,775,254 | FAIR           |              0.54 |              1.81 |               0.32 |                \-11.3 |                   6.2 |
 | 26 |               0.14 |               0.27 |                   20.5 |                 \-17.8 |   2,270,082 |  2,270,145 |  2,675,926 |    6,324,101 |   2,597,140 | GOOD         |            0.58 |            0.97 |             0.46 |              \-15.3 |               \-6.5 |     6,362,123 | GOOD           |              0.72 |              1.24 |               0.59 |                   5.2 |                \-24.3 |
 | 23 |             \-0.15 |               0.22 |                   11.5 |                    3.9 |   1,045,664 |  1,045,729 |  1,247,312 |    4,893,087 |   1,218,359 | FAIR         |            0.96 |            1.93 |             0.93 |              \-12.7 |              \-37.9 |     4,917,114 | POOR           |              0.81 |              2.15 |               0.77 |                 \-1.2 |                \-34.0 |
 | 54 |             \-0.19 |               1.48 |                   29.0 |                   26.6 |     949,944 |    950,013 |  1,503,486 |    5,135,219 |   1,460,781 | FAIR         |            1.01 |            1.57 |             0.67 |              \-16.0 |              \-18.7 |     5,156,673 | POOR           |              0.82 |              3.05 |               0.39 |                  13.0 |                   7.9 |
@@ -630,13 +551,13 @@ avg_error_corr
     ##  Pearson's product-moment correlation
     ## 
     ## data:  low_avg_error_df$avg_error_val and low_avg_error_df$avg_error_reval
-    ## t = 3.8299, df = 47, p-value = 0.0003787
+    ## t = 3.9755, df = 48, p-value = 0.0002356
     ## alternative hypothesis: true correlation is not equal to 0
     ## 95 percent confidence interval:
-    ##  0.2393344 0.6761731
+    ##  0.2546197 0.6816164
     ## sample estimates:
     ##       cor 
-    ## 0.4877082
+    ## 0.4976944
 
 ``` r
 max_error_corr
@@ -646,13 +567,13 @@ max_error_corr
     ##  Pearson's product-moment correlation
     ## 
     ## data:  low_avg_error_df$max_error_val and low_avg_error_df$max_error_reval
-    ## t = 3.1812, df = 47, p-value = 0.002599
+    ## t = 3.2127, df = 48, p-value = 0.00235
     ## alternative hypothesis: true correlation is not equal to 0
     ## 95 percent confidence interval:
-    ##  0.1584750 0.6278044
+    ##  0.1612127 0.6257570
     ## sample estimates:
-    ##       cor 
-    ## 0.4209145
+    ##      cor 
+    ## 0.420683
 
 ### Methods for correlation plots
 
@@ -830,7 +751,7 @@ shapiro.test(val_reval_changes_df$pix_x_offset_change)
     ##  Shapiro-Wilk normality test
     ## 
     ## data:  val_reval_changes_df$pix_x_offset_change
-    ## W = 0.947, p-value = 0.02797
+    ## W = 0.9483, p-value = 0.02907
 
 ``` r
 shapiro.test(val_reval_changes_df$pix_y_offset_change)
@@ -840,7 +761,7 @@ shapiro.test(val_reval_changes_df$pix_y_offset_change)
     ##  Shapiro-Wilk normality test
     ## 
     ## data:  val_reval_changes_df$pix_y_offset_change
-    ## W = 0.97599, p-value = 0.4111
+    ## W = 0.97628, p-value = 0.4078
 
 Then, using the categorized offset dataframe, apply test to distance
 calculated via norming (x,y) and origin. It’s very likely the distances
@@ -855,7 +776,7 @@ shapiro.test(categorized_offset_df$distance)
     ##  Shapiro-Wilk normality test
     ## 
     ## data:  categorized_offset_df$distance
-    ## W = 0.83527, p-value = 4.557e-09
+    ## W = 0.83188, p-value = 2.683e-09
 
 #### Paired samples Wilcoxon test for x offset:
 
@@ -871,7 +792,7 @@ wilcox.test(
     ##  Wilcoxon signed rank test with continuity correction
     ## 
     ## data:  val_reval_changes_df$pix_x_offset_val and val_reval_changes_df$pix_x_offset_reval
-    ## V = 524.5, p-value = 0.3841
+    ## V = 553.5, p-value = 0.4202
     ## alternative hypothesis: true location shift is not equal to 0
 
 ``` r
@@ -894,13 +815,13 @@ t.test(
     ##  Paired t-test
     ## 
     ## data:  val_reval_changes_df$pix_y_offset_val and val_reval_changes_df$pix_y_offset_reval
-    ## t = 0.14556, df = 48, p-value = 0.8849
+    ## t = 0.14847, df = 49, p-value = 0.8826
     ## alternative hypothesis: true difference in means is not equal to 0
     ## 95 percent confidence interval:
-    ##  -10.56464  12.21362
+    ##  -10.32915  11.97715
     ## sample estimates:
     ## mean of the differences 
-    ##               0.8244898
+    ##                   0.824
 
 ``` r
 get_offset_boxplot(df = categorized_offset_df, group = "category", measure = "y")
@@ -919,10 +840,10 @@ wilcox.test(
 ```
 
     ## 
-    ##  Wilcoxon signed rank exact test
+    ##  Wilcoxon signed rank test with continuity correction
     ## 
     ## data:  distance by category
-    ## V = 1141, p-value = 4.236e-09
+    ## V = 1186, p-value = 1.223e-07
     ## alternative hypothesis: true location shift is not equal to 0
 
 ``` r
@@ -1044,48 +965,6 @@ make_paired_plot(categorized_error_df %>% filter(id != 11),
 
 ![](eyetracker_data_preprocessing_files/figure-gfm/error-change-paired-plot-3.png)<!-- -->
 
-## Behavioral data
-
-### Clock sides
-
-Get the clock sides for each participant and create a dataframe of their
-id and side values.
-
-``` r
-CLOCK_LEFT <- 0
-CLOCK_RIGHT <- 1
-
-get_clock_sides <- function(behavioral_df_list) {
-  if ("df" %in% ls()) rm("df")
-  df <- data.frame(id = integer(), side = integer())
-
-  for (i in id_vector) {
-    side <- behavioral_df_list[[i]] %>%
-      slice(1) %>%
-      pull(clock_side)
-    df <- df %>% dplyr::add_row(tibble(id = i, side))
-  }
-
-  return(df)
-}
-
-clock_sides_df <- get_clock_sides(behavioral_df_list)
-
-# Count of left and right clock sides
-make_pretty_df(
-  head(
-    clock_sides_df %>%
-      group_by(side) %>%
-      count()
-  )
-)
-```
-
-| side |  n |
-| ---: | -: |
-|    0 | 16 |
-|    1 | 33 |
-
 ## Samples data
 
 ``` r
@@ -1179,59 +1058,6 @@ get_task_gaze_df_list <- function(etd_samples, id_vector) {
 task_gaze_df_list <- get_task_gaze_df_list(etd_samples, id_vector)
 ```
 
-### Flip right-side clocks to left side
-
-``` r
-reflect_over_midpoint <- function(point, midpoint) {
-  return(2 * midpoint - point)
-}
-
-right_clocks_df <- clock_sides_df %>%
-  filter(side == CLOCK_RIGHT)
-
-right_clocks_df
-```
-
-    ##    id side
-    ## 1   1    1
-    ## 2   5    1
-    ## 3   6    1
-    ## 4   8    1
-    ## 5   9    1
-    ## 6  11    1
-    ## 7  12    1
-    ## 8  16    1
-    ## 9  20    1
-    ## 10 22    1
-    ## 11 23    1
-    ## 12 25    1
-    ## 13 26    1
-    ## 14 27    1
-    ## 15 29    1
-    ## 16 30    1
-    ## 17 32    1
-    ## 18 33    1
-    ## 19 34    1
-    ## 20 35    1
-    ## 21 37    1
-    ## 22 40    1
-    ## 23 41    1
-    ## 24 42    1
-    ## 25 43    1
-    ## 26 44    1
-    ## 27 45    1
-    ## 28 47    1
-    ## 29 48    1
-    ## 30 51    1
-    ## 31 53    1
-    ## 32 54    1
-    ## 33 57    1
-
-``` r
-#task_gaze_df_list[[2]] %>%
-#  mutate(gx = reflect_over_midpoint(gx, SCREEN_CENTER_COORD[[1]]))
-```
-
 ``` r
 FIXED_ID <- 4
 
@@ -1289,10 +1115,10 @@ t.test(df$avg_error_change, mu = 0)
     ##  One Sample t-test
     ## 
     ## data:  df$avg_error_change
-    ## t = 7.319, df = 45, p-value = 3.437e-09
+    ## t = 7.3061, df = 46, p-value = 3.172e-09
     ## alternative hypothesis: true mean is not equal to 0
     ## 95 percent confidence interval:
-    ##  0.3901369 0.6863848
+    ##  0.3836718 0.6754772
     ## sample estimates:
     ## mean of x 
-    ## 0.5382609
+    ## 0.5295745
