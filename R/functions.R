@@ -46,11 +46,11 @@ make_pretty_df <- function(df) {
 #' @return path to that participant's id
 #' @examples
 #' get_path_to_id(extracted_eyetracker_data_path, 4)
-get_path_to_id <- function(path_to_dir, id) {
+get_path_to_id <- function(path_to_dir, id, prefix = "CSN", pad_length = 3) {
   padded_id <- stringr::str_pad(id,
-                                participant_id_pad_length,
-                                pad = participant_id_pad_character)
-  participant_id <- stringr::str_c(participant_id_prefix, padded_id)
+                                pad_length,
+                                pad = "0")
+  participant_id <- stringr::str_c(prefix, padded_id)
   return(file.path(path_to_dir,
                    participant_id))
 }
