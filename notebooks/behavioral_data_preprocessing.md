@@ -2,174 +2,49 @@ Behavioral Data Preprocessing
 ================
 Ari Dyckovsky
 
-  - [Setup](#setup)
-      - [Load package with
-        dependencies](#load-package-with-dependencies)
-      - [Load configuration settings](#load-configuration-settings)
-      - [File path definitions](#file-path-definitions)
-      - [Participant identification
-        settings](#participant-identification-settings)
-  - [Load extracted data](#load-extracted-data)
-  - [Clock sides](#clock-sides)
-      - [Flip right-side clocks to left
-        side](#flip-right-side-clocks-to-left-side)
+Construct a list of the extracted behavioral CSV file targets by
+participant.
 
-## Setup
+Read CSVs into dataframe `combined_df` after using `tar_read_raw` to get
+the file path for participants from targets. Will include *all*
+participants and include an `id` column to identify the participant
+individually.
 
-This notebook requires that the following chunks are run before any
-other section chunks can resolve. Please complete the following in
-order:
+Count of participants by unique id.
 
-1.  Load the package interface with its dependencies,
-2.  Load the configuration settings,
-3.  Set file paths,
-4.  Set participant identification settings.
+    ## [1] 50
 
-### Load package with dependencies
+    ## # A tibble: 1 x 4
+    ##   `mean(n)` `sd(n)` `min(n)` `max(n)`
+    ##       <dbl>   <dbl>    <int>    <int>
+    ## 1      37.3    32.9        4      170
 
-``` r
-# Load csn package with devtools
-library(devtools)
-load_all()
+    ## # A tibble: 1,800 x 4
+    ##    id     trial response_window_min response_window_max
+    ##    <chr>  <dbl>               <dbl>               <dbl>
+    ##  1 CSN001    81                80.1                88.1
+    ##  2 CSN001   117               116.                124. 
+    ##  3 CSN001   119               118.                126. 
+    ##  4 CSN001   211               210.                218. 
+    ##  5 CSN001   235               234.                242. 
+    ##  6 CSN001   361               360.                368. 
+    ##  7 CSN001   461               460.                468. 
+    ##  8 CSN001   591               590.                598. 
+    ##  9 CSN001   823               822.                830. 
+    ## 10 CSN001   845               844.                852. 
+    ## # … with 1,790 more rows
 
-# Load dependencies
-library(tidyverse)
-library(rlang)
-library(ggpubr)
-```
-
-### Load configuration settings
-
-We use a configuration file called `config.yml` to handle environment
-settings, such as the absolute path to data and subdirectories by type
-of data (i.e., “raw”) and participant identification details (i.e., the
-prefix “CSN”). For more information on how to use configurable
-environment settings, see [this introduction
-vignette](https://cran.r-project.org/web/packages/config/vignettes/introduction.html).
-
-``` r
-config <- config::get()
-```
-
-### File path definitions
-
-File path definitions are set using configured environment settings from
-the `config.yml` file. (Note: overrides of configured settings should
-occur within the YAML text file, usually via a new environment that
-inherits defaults other than explicit overrides).
-
-``` r
-# Top level data path for entry
-data_path <- config$path$data
-
-# Extracted data subdirectory path
-extracted_data_path <- file.path(
-  data_path,
-  config$path$extracted
-)
-
-# Extracted behavioral data subdirectory path
-extracted_behavioral_data_path <- file.path(
-  extracted_data_path,
-  config$path$behavioral
-)
-```
-
-### Participant identification settings
-
-Participant identification settings are also use configured environment
-settings from the `config.yml` file.
-
-``` r
-# Participant id settings
-participant_id_prefix <- config$participant_id$prefix
-participant_id_pad_length <- config$participant_id$pad_length
-participant_id_pad_character <- config$participant_id$pad_character
-participant_id_min <- config$participant_id$min
-participant_id_max <- config$participant_id$max
-```
-
-## Load extracted data
-
-Start by establishing a vectorized key of integer identifiers for study
-participants. These ids reflect only participants who completed all
-required elements of the task.
-
-``` r
-# Convenience instantiation of the id vector for later use. Can use
-# the getter method at any point for same output. Note: This uses the
-# extracted eyetracker data path.
-id_vector <- itrackvalr::get_id_vector(extracted_behavioral_data_path,
-                                       participant_id_min,
-                                       participant_id_max)
-```
-
-Then, load behavioral response data for each participant. The following
-chunk calls `itrackvalr` functions to load CSVs for participants’
-extracted behavioral data. The function returns assigns a list of these
-loaded dataframes that we assign to `behavioral_df_list`.
-
-``` r
-behavioral_df_list <- itrackvalr::load_participant_data(extracted_behavioral_data_path,
-                                            id_vector)
-```
-
-## Clock sides
-
-Get the clock sides for each participant and create a dataframe of their
-id and side values.
-
-``` r
-CLOCK_LEFT <- 0
-CLOCK_RIGHT <- 1
-
-get_clock_sides <- function(behavioral_df_list) {
-  if ("df" %in% ls()) rm("df")
-  df <- data.frame(id = integer(), side = integer())
-
-  for (i in id_vector) {
-    side <- behavioral_df_list[[i]] %>%
-      slice(1) %>%
-      pull(clock_side)
-    df <- df %>% dplyr::add_row(tibble(id = i, side))
-  }
-
-  return(df)
-}
-
-clock_sides_df <- get_clock_sides(behavioral_df_list)
-
-# Count of left and right clock sides
-make_pretty_df(
-  head(
-    clock_sides_df %>%
-      group_by(side) %>%
-      count()
-  )
-)
-```
-
-| side | n |
-| ---: | -: |
-
-### Flip right-side clocks to left side
-
-``` r
-reflect_over_midpoint <- function(point, midpoint) {
-  return(2 * midpoint - point)
-}
-
-right_clocks_df <- clock_sides_df %>%
-  filter(side == CLOCK_RIGHT) %>%
-  mutate(side = as.integer(side))
-
-right_clocks_df
-```
-
-    ## [1] id   side
-    ## <0 rows> (or 0-length row.names)
-
-``` r
-#task_gaze_df_list[[2]] %>%
-#  mutate(gx = reflect_over_midpoint(gx, SCREEN_CENTER_COORD[[1]]))
-```
+    ## # A tibble: 1,865 x 3
+    ##    id     trial resp_time
+    ##    <chr>  <dbl>     <dbl>
+    ##  1 CSN001   117      117.
+    ##  2 CSN001   357      357.
+    ##  3 CSN001   426      426.
+    ##  4 CSN001   523      523.
+    ##  5 CSN001   739      738.
+    ##  6 CSN001   823      823.
+    ##  7 CSN001   846      846.
+    ##  8 CSN001  1029     1029.
+    ##  9 CSN001  1225     1225.
+    ## 10 CSN001  1630     1630.
+    ## # … with 1,855 more rows

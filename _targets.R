@@ -62,5 +62,9 @@ list(
       extract_behavioral_data(raw_behavioral_file),
       format = "file"
     )
+  ),
+  tar_render(
+    behavioral_data_preprocessing_notebook,
+    "notebooks/behavioral_data_preprocessing.Rmd"
   )
 )
