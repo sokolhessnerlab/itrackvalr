@@ -28,6 +28,9 @@ options(
 )
 ```
 
+
+## Load extracted CSV files
+
 Construct a list of the extracted behavioral CSV file targets by participant.
 
 ```{r}
@@ -53,6 +56,8 @@ combined_df <- combined_df %>%
   select(-c(resp_type, step_type))
 ```
 
+## Sanity checks
+
 Count of participants by unique id.
 
 ```{r}
@@ -66,6 +71,8 @@ combined_df %>%
   tally(is_response) %>%
   summarise(mean(n), sd(n), min(n), max(n))
 ```
+
+## Function definitions
 
 The function to get each participant's hit time:
 
@@ -132,14 +139,51 @@ get_combined_hits <- function(participants, combined_df) {
 }
 ```
 
-Get the combined hits using the function
+## Get the combined hits using the function
 
 ```{r}
 combined_hits_df <- get_combined_hits(participants, combined_df)
 ```
 
-Check out a quick preview of the table of hits
+## Check out a quick preview of the table of hits
 
 ```{r}
 knitr::kable(head(combined_hits_df, 10))
 ```
+
+## Check out the reaction time summary statistics by id:
+
+```{r}
+knitr::kable(head(
+  combined_hits_df %>%
+    drop_na() %>%
+    group_by(id) %>%
+    summarise(
+      reaction_time_mean = mean(reaction_time),
+      reaction_time_min = min(reaction_time),
+      reaction_time_max = max(reaction_time),
+      reaction_time_sd = sd(reaction_time)
+    ),
+  10
+))
+```
+
+## Show plot of reaction times by signal times
+
+For hits, the reaction time does increase slightly across all participants.
+
+```{r}
+combined_hits_df %>%
+  drop_na() %>%
+  ggplot(aes(x = signal_time, y = reaction_time)) +
+    geom_point(color = 'orange') +
+    geom_smooth(method=lm) +
+    theme_classic()
+```
+
+
+
+
+
+
+
