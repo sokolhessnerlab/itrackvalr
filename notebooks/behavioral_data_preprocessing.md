@@ -19,32 +19,25 @@ Count of participants by unique id.
     ##       <dbl>   <dbl>    <int>    <int>
     ## 1      37.3    32.9        4      170
 
-    ## # A tibble: 1,800 x 4
-    ##    id     trial response_window_min response_window_max
-    ##    <chr>  <dbl>               <dbl>               <dbl>
-    ##  1 CSN001    81                80.1                88.1
-    ##  2 CSN001   117               116.                124. 
-    ##  3 CSN001   119               118.                126. 
-    ##  4 CSN001   211               210.                218. 
-    ##  5 CSN001   235               234.                242. 
-    ##  6 CSN001   361               360.                368. 
-    ##  7 CSN001   461               460.                468. 
-    ##  8 CSN001   591               590.                598. 
-    ##  9 CSN001   823               822.                830. 
-    ## 10 CSN001   845               844.                852. 
-    ## # … with 1,790 more rows
+The function to get each participant’s hit time:
 
-    ## # A tibble: 1,865 x 3
-    ##    id     trial resp_time
-    ##    <chr>  <dbl>     <dbl>
-    ##  1 CSN001   117      117.
-    ##  2 CSN001   357      357.
-    ##  3 CSN001   426      426.
-    ##  4 CSN001   523      523.
-    ##  5 CSN001   739      738.
-    ##  6 CSN001   823      823.
-    ##  7 CSN001   846      846.
-    ##  8 CSN001  1029     1029.
-    ##  9 CSN001  1225     1225.
-    ## 10 CSN001  1630     1630.
-    ## # … with 1,855 more rows
+The function to get a dataframe of combined hits, including the hit time
+itself, and the reaction time between that hit time and the signal
+prompting that response.
+
+Get the combined hits using the function
+
+Check out a quick preview of the table of hits
+
+| trial | id     | image\_index |   signal\_time |     hit\_time | reaction\_time |
+| ----: | :----- | -----------: | -------------: | ------------: | -------------: |
+|    81 | CSN001 |          801 |  80.0604399294 |            NA |             NA |
+|   117 | CSN001 |          941 | 116.0665163944 | 116.984091845 | 0.917575450165 |
+|   119 | CSN001 |         3131 | 118.0679634164 |            NA |             NA |
+|   211 | CSN001 |         1325 | 210.0571848214 |            NA |             NA |
+|   235 | CSN001 |          752 | 234.0716901990 |            NA |             NA |
+|   361 | CSN001 |          103 | 360.0647047530 |            NA |             NA |
+|   461 | CSN001 |         2804 | 460.0590288559 |            NA |             NA |
+|   591 | CSN001 |           28 | 590.0714484362 |            NA |             NA |
+|   823 | CSN001 |          929 | 822.0630183384 | 822.772524834 | 0.709506495599 |
+|   845 | CSN001 |          517 | 844.0589960678 | 845.923186561 | 1.864190493347 |

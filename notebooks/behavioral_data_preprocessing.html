@@ -611,37 +611,105 @@ body {
 ##   `mean(n)` `sd(n)` `min(n)` `max(n)`
 ##       &lt;dbl&gt;   &lt;dbl&gt;    &lt;int&gt;    &lt;int&gt;
 ## 1      37.3    32.9        4      170
-
-## # A tibble: 1,800 x 4
-##    id     trial response_window_min response_window_max
-##    &lt;chr&gt;  &lt;dbl&gt;               &lt;dbl&gt;               &lt;dbl&gt;
-##  1 CSN001    81                80.1                88.1
-##  2 CSN001   117               116.                124. 
-##  3 CSN001   119               118.                126. 
-##  4 CSN001   211               210.                218. 
-##  5 CSN001   235               234.                242. 
-##  6 CSN001   361               360.                368. 
-##  7 CSN001   461               460.                468. 
-##  8 CSN001   591               590.                598. 
-##  9 CSN001   823               822.                830. 
-## 10 CSN001   845               844.                852. 
-## # … with 1,790 more rows
-
-## # A tibble: 1,865 x 3
-##    id     trial resp_time
-##    &lt;chr&gt;  &lt;dbl&gt;     &lt;dbl&gt;
-##  1 CSN001   117      117.
-##  2 CSN001   357      357.
-##  3 CSN001   426      426.
-##  4 CSN001   523      523.
-##  5 CSN001   739      738.
-##  6 CSN001   823      823.
-##  7 CSN001   846      846.
-##  8 CSN001  1029     1029.
-##  9 CSN001  1225     1225.
-## 10 CSN001  1630     1630.
-## # … with 1,855 more rows
 </code></pre>
+<p>The function to get each participant’s hit time:</p>
+<p>The function to get a dataframe of combined hits, including the hit time itself, and the reaction time between that hit time and the signal prompting that response.</p>
+<p>Get the combined hits using the function</p>
+<p>Check out a quick preview of the table of hits</p>
+<table>
+<thead>
+<tr class="header">
+<th align="right">trial</th>
+<th align="left">id</th>
+<th align="right">image_index</th>
+<th align="right">signal_time</th>
+<th align="right">hit_time</th>
+<th align="right">reaction_time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">81</td>
+<td align="left">CSN001</td>
+<td align="right">801</td>
+<td align="right">80.0604399294</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="right">117</td>
+<td align="left">CSN001</td>
+<td align="right">941</td>
+<td align="right">116.0665163944</td>
+<td align="right">116.984091845</td>
+<td align="right">0.917575450165</td>
+</tr>
+<tr class="odd">
+<td align="right">119</td>
+<td align="left">CSN001</td>
+<td align="right">3131</td>
+<td align="right">118.0679634164</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="right">211</td>
+<td align="left">CSN001</td>
+<td align="right">1325</td>
+<td align="right">210.0571848214</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="right">235</td>
+<td align="left">CSN001</td>
+<td align="right">752</td>
+<td align="right">234.0716901990</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="right">361</td>
+<td align="left">CSN001</td>
+<td align="right">103</td>
+<td align="right">360.0647047530</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="right">461</td>
+<td align="left">CSN001</td>
+<td align="right">2804</td>
+<td align="right">460.0590288559</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="right">591</td>
+<td align="left">CSN001</td>
+<td align="right">28</td>
+<td align="right">590.0714484362</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="right">823</td>
+<td align="left">CSN001</td>
+<td align="right">929</td>
+<td align="right">822.0630183384</td>
+<td align="right">822.772524834</td>
+<td align="right">0.709506495599</td>
+</tr>
+<tr class="even">
+<td align="right">845</td>
+<td align="left">CSN001</td>
+<td align="right">517</td>
+<td align="right">844.0589960678</td>
+<td align="right">845.923186561</td>
+<td align="right">1.864190493347</td>
+</tr>
+</tbody>
+</table>
 
 </body>
 </html>
