@@ -5,14 +5,47 @@ Ari Dyckovsky
 Construct a list of the extracted behavioral CSV file targets by
 participant.
 
+``` r
+extracted_behavioral_csv_files <- participants %>%
+  unlist(use.names = FALSE) %>%
+  map(~ str_c("extracted_behavioral_csv_file_", .x))
+```
+
 Read CSVs into dataframe `combined_df` after using `tar_read_raw` to get
 the file path for participants from targets. Will include *all*
 participants and include an `id` column to identify the participant
 individually.
 
+``` r
+withr::with_dir(here::here(), {
+  combined_df <- extracted_behavioral_csv_files %>%
+    map_df(~ read_csv(tar_read_raw(.)))
+})
+
+# Transform step and response types to 0 or 1 integer values to simulate boolean behavior.
+combined_df <- combined_df %>%
+  mutate(
+    is_signal = as.integer(step_type > 1),
+    is_response = as.integer(resp_type)
+  ) %>%
+  select(-c(resp_type, step_type))
+```
+
 Count of participants by unique id.
 
+``` r
+length(unique(combined_df$id))
+```
+
     ## [1] 50
+
+``` r
+combined_df %>%
+  select(trial, id, is_response, is_signal, resp_time, step_time) %>%
+  group_by(id) %>%
+  tally(is_response) %>%
+  summarise(mean(n), sd(n), min(n), max(n))
+```
 
     ## # A tibble: 1 x 4
     ##   `mean(n)` `sd(n)` `min(n)` `max(n)`
@@ -21,13 +54,81 @@ Count of participants by unique id.
 
 The function to get each participant’s hit time:
 
+``` r
+HIT_INTERVAL <- 8
+
+# Get hit timestampe from a vector of signal times and a vector of response times
+# Use the .interval variable if HIT_INTERVAL is not defined or a different hit interval is desired
+get_hit_time <- function(signal_times, response_times, .interval = HIT_INTERVAL) {
+  signal_times %>% 
+    map_dbl(function(signal_time) {
+      
+      hit_index <- first(which(
+        response_times %>% 
+          map_lgl(~ between(.x, signal_time, signal_time + .interval)),
+        arr.ind = TRUE
+      ))
+      
+      hit_time <- response_times[hit_index]
+      
+      return(hit_time)
+      
+    })
+}
+```
+
 The function to get a dataframe of combined hits, including the hit time
 itself, and the reaction time between that hit time and the signal
 prompting that response.
 
+``` r
+# Get combined hits dataframe composed of each participant's hit times and
+# reaction times for those hits, row-by-row with signal times.
+# Uses both combined signals and responses
+get_combined_hits <- function(participants, combined_df) {
+  
+  # Extract only rows where a signal is present
+  combined_signals_df <- combined_df %>%
+    filter(is_signal == 1) %>%
+    mutate(
+      signal_time = step_time
+    ) %>%
+    select(trial, id, image_index, signal_time)
+  
+  # Extract only rows where a response attempt is present
+  combined_responses_df <- combined_df %>%
+    filter(is_response == 1) %>%
+    select(trial, id, image_index, resp_time)
+  
+  # Map over the unlisted participants' ids to get the per-participant
+  # signals and responses, then return a combined dataframe of all participant
+  # including trial rows for signals, and if it exists, hit time and reaction time
+  map_dfr(unlist(participants), function(participant) {
+    participant_signals <- combined_signals_df %>%
+      filter(id == participant)
+    
+    participant_responses <- combined_responses_df %>%
+      filter(id == participant)
+      
+    participant_signals %>% mutate(
+        hit_time = get_hit_time(participant_signals$signal_time, participant_responses$resp_time),
+        reaction_time = hit_time - signal_time
+      )
+  })
+}
+```
+
 Get the combined hits using the function
 
+``` r
+combined_hits_df <- get_combined_hits(participants, combined_df)
+```
+
 Check out a quick preview of the table of hits
+
+``` r
+knitr::kable(head(combined_hits_df, 10))
+```
 
 | trial | id     | image\_index |   signal\_time |     hit\_time | reaction\_time |
 | ----: | :----- | -----------: | -------------: | ------------: | -------------: |

@@ -603,19 +603,96 @@ body {
 <h1 id="behavioral-data-preprocessing">Behavioral Data Preprocessing</h1>
 <p>Ari Dyckovsky</p>
 <p>Construct a list of the extracted behavioral CSV file targets by participant.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>extracted_behavioral_csv_files &lt;-<span class="st"> </span>participants <span class="op">%&gt;%</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="st">  </span><span class="kw">unlist</span>(<span class="dt">use.names =</span> <span class="ot">FALSE</span>) <span class="op">%&gt;%</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="st">  </span><span class="kw">map</span>(<span class="op">~</span><span class="st"> </span><span class="kw">str_c</span>(<span class="st">&quot;extracted_behavioral_csv_file_&quot;</span>, .x))</span></code></pre></div>
 <p>Read CSVs into dataframe <code>combined_df</code> after using <code>tar_read_raw</code> to get the file path for participants from targets. Will include <em>all</em> participants and include an <code>id</code> column to identify the participant individually.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>withr<span class="op">::</span><span class="kw">with_dir</span>(here<span class="op">::</span><span class="kw">here</span>(), {</span>
+<span id="cb2-2"><a href="#cb2-2"></a>  combined_df &lt;-<span class="st"> </span>extracted_behavioral_csv_files <span class="op">%&gt;%</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="st">    </span><span class="kw">map_df</span>(<span class="op">~</span><span class="st"> </span><span class="kw">read_csv</span>(<span class="kw">tar_read_raw</span>(.)))</span>
+<span id="cb2-4"><a href="#cb2-4"></a>})</span>
+<span id="cb2-5"><a href="#cb2-5"></a></span>
+<span id="cb2-6"><a href="#cb2-6"></a><span class="co"># Transform step and response types to 0 or 1 integer values to simulate boolean behavior.</span></span>
+<span id="cb2-7"><a href="#cb2-7"></a>combined_df &lt;-<span class="st"> </span>combined_df <span class="op">%&gt;%</span></span>
+<span id="cb2-8"><a href="#cb2-8"></a><span class="st">  </span><span class="kw">mutate</span>(</span>
+<span id="cb2-9"><a href="#cb2-9"></a>    <span class="dt">is_signal =</span> <span class="kw">as.integer</span>(step_type <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>),</span>
+<span id="cb2-10"><a href="#cb2-10"></a>    <span class="dt">is_response =</span> <span class="kw">as.integer</span>(resp_type)</span>
+<span id="cb2-11"><a href="#cb2-11"></a>  ) <span class="op">%&gt;%</span></span>
+<span id="cb2-12"><a href="#cb2-12"></a><span class="st">  </span><span class="kw">select</span>(<span class="op">-</span><span class="kw">c</span>(resp_type, step_type))</span></code></pre></div>
 <p>Count of participants by unique id.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">length</span>(<span class="kw">unique</span>(combined_df<span class="op">$</span>id))</span></code></pre></div>
 <pre><code>## [1] 50
-
-## # A tibble: 1 x 4
+</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>combined_df <span class="op">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a><span class="st">  </span><span class="kw">select</span>(trial, id, is_response, is_signal, resp_time, step_time) <span class="op">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a><span class="st">  </span><span class="kw">group_by</span>(id) <span class="op">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a><span class="st">  </span><span class="kw">tally</span>(is_response) <span class="op">%&gt;%</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="st">  </span><span class="kw">summarise</span>(<span class="kw">mean</span>(n), <span class="kw">sd</span>(n), <span class="kw">min</span>(n), <span class="kw">max</span>(n))</span></code></pre></div>
+<pre><code>## # A tibble: 1 x 4
 ##   `mean(n)` `sd(n)` `min(n)` `max(n)`
 ##       &lt;dbl&gt;   &lt;dbl&gt;    &lt;int&gt;    &lt;int&gt;
 ## 1      37.3    32.9        4      170
 </code></pre>
 <p>The function to get each participant’s hit time:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>HIT_INTERVAL &lt;-<span class="st"> </span><span class="dv">8</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a></span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="co"># Get hit timestampe from a vector of signal times and a vector of response times</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="co"># Use the .interval variable if HIT_INTERVAL is not defined or a different hit interval is desired</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a>get_hit_time &lt;-<span class="st"> </span><span class="cf">function</span>(signal_times, response_times, <span class="dt">.interval =</span> HIT_INTERVAL) {</span>
+<span id="cb7-6"><a href="#cb7-6"></a>  signal_times <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb7-7"><a href="#cb7-7"></a><span class="st">    </span><span class="kw">map_dbl</span>(<span class="cf">function</span>(signal_time) {</span>
+<span id="cb7-8"><a href="#cb7-8"></a>      </span>
+<span id="cb7-9"><a href="#cb7-9"></a>      hit_index &lt;-<span class="st"> </span><span class="kw">first</span>(<span class="kw">which</span>(</span>
+<span id="cb7-10"><a href="#cb7-10"></a>        response_times <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb7-11"><a href="#cb7-11"></a><span class="st">          </span><span class="kw">map_lgl</span>(<span class="op">~</span><span class="st"> </span><span class="kw">between</span>(.x, signal_time, signal_time <span class="op">+</span><span class="st"> </span>.interval)),</span>
+<span id="cb7-12"><a href="#cb7-12"></a>        <span class="dt">arr.ind =</span> <span class="ot">TRUE</span></span>
+<span id="cb7-13"><a href="#cb7-13"></a>      ))</span>
+<span id="cb7-14"><a href="#cb7-14"></a>      </span>
+<span id="cb7-15"><a href="#cb7-15"></a>      hit_time &lt;-<span class="st"> </span>response_times[hit_index]</span>
+<span id="cb7-16"><a href="#cb7-16"></a>      </span>
+<span id="cb7-17"><a href="#cb7-17"></a>      <span class="kw">return</span>(hit_time)</span>
+<span id="cb7-18"><a href="#cb7-18"></a>      </span>
+<span id="cb7-19"><a href="#cb7-19"></a>    })</span>
+<span id="cb7-20"><a href="#cb7-20"></a>}</span></code></pre></div>
 <p>The function to get a dataframe of combined hits, including the hit time itself, and the reaction time between that hit time and the signal prompting that response.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co"># Get combined hits dataframe composed of each participant&#39;s hit times and</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="co"># reaction times for those hits, row-by-row with signal times.</span></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="co"># Uses both combined signals and responses</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a>get_combined_hits &lt;-<span class="st"> </span><span class="cf">function</span>(participants, combined_df) {</span>
+<span id="cb8-5"><a href="#cb8-5"></a>  </span>
+<span id="cb8-6"><a href="#cb8-6"></a>  <span class="co"># Extract only rows where a signal is present</span></span>
+<span id="cb8-7"><a href="#cb8-7"></a>  combined_signals_df &lt;-<span class="st"> </span>combined_df <span class="op">%&gt;%</span></span>
+<span id="cb8-8"><a href="#cb8-8"></a><span class="st">    </span><span class="kw">filter</span>(is_signal <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span></span>
+<span id="cb8-9"><a href="#cb8-9"></a><span class="st">    </span><span class="kw">mutate</span>(</span>
+<span id="cb8-10"><a href="#cb8-10"></a>      <span class="dt">signal_time =</span> step_time</span>
+<span id="cb8-11"><a href="#cb8-11"></a>    ) <span class="op">%&gt;%</span></span>
+<span id="cb8-12"><a href="#cb8-12"></a><span class="st">    </span><span class="kw">select</span>(trial, id, image_index, signal_time)</span>
+<span id="cb8-13"><a href="#cb8-13"></a>  </span>
+<span id="cb8-14"><a href="#cb8-14"></a>  <span class="co"># Extract only rows where a response attempt is present</span></span>
+<span id="cb8-15"><a href="#cb8-15"></a>  combined_responses_df &lt;-<span class="st"> </span>combined_df <span class="op">%&gt;%</span></span>
+<span id="cb8-16"><a href="#cb8-16"></a><span class="st">    </span><span class="kw">filter</span>(is_response <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span></span>
+<span id="cb8-17"><a href="#cb8-17"></a><span class="st">    </span><span class="kw">select</span>(trial, id, image_index, resp_time)</span>
+<span id="cb8-18"><a href="#cb8-18"></a>  </span>
+<span id="cb8-19"><a href="#cb8-19"></a>  <span class="co"># Map over the unlisted participants&#39; ids to get the per-participant</span></span>
+<span id="cb8-20"><a href="#cb8-20"></a>  <span class="co"># signals and responses, then return a combined dataframe of all participant</span></span>
+<span id="cb8-21"><a href="#cb8-21"></a>  <span class="co"># including trial rows for signals, and if it exists, hit time and reaction time</span></span>
+<span id="cb8-22"><a href="#cb8-22"></a>  <span class="kw">map_dfr</span>(<span class="kw">unlist</span>(participants), <span class="cf">function</span>(participant) {</span>
+<span id="cb8-23"><a href="#cb8-23"></a>    participant_signals &lt;-<span class="st"> </span>combined_signals_df <span class="op">%&gt;%</span></span>
+<span id="cb8-24"><a href="#cb8-24"></a><span class="st">      </span><span class="kw">filter</span>(id <span class="op">==</span><span class="st"> </span>participant)</span>
+<span id="cb8-25"><a href="#cb8-25"></a>    </span>
+<span id="cb8-26"><a href="#cb8-26"></a>    participant_responses &lt;-<span class="st"> </span>combined_responses_df <span class="op">%&gt;%</span></span>
+<span id="cb8-27"><a href="#cb8-27"></a><span class="st">      </span><span class="kw">filter</span>(id <span class="op">==</span><span class="st"> </span>participant)</span>
+<span id="cb8-28"><a href="#cb8-28"></a>      </span>
+<span id="cb8-29"><a href="#cb8-29"></a>    participant_signals <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(</span>
+<span id="cb8-30"><a href="#cb8-30"></a>        <span class="dt">hit_time =</span> <span class="kw">get_hit_time</span>(participant_signals<span class="op">$</span>signal_time, participant_responses<span class="op">$</span>resp_time),</span>
+<span id="cb8-31"><a href="#cb8-31"></a>        <span class="dt">reaction_time =</span> hit_time <span class="op">-</span><span class="st"> </span>signal_time</span>
+<span id="cb8-32"><a href="#cb8-32"></a>      )</span>
+<span id="cb8-33"><a href="#cb8-33"></a>  })</span>
+<span id="cb8-34"><a href="#cb8-34"></a>}</span></code></pre></div>
 <p>Get the combined hits using the function</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>combined_hits_df &lt;-<span class="st"> </span><span class="kw">get_combined_hits</span>(participants, combined_df)</span></code></pre></div>
 <p>Check out a quick preview of the table of hits</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">head</span>(combined_hits_df, <span class="dv">10</span>))</span></code></pre></div>
 <table>
 <thead>
 <tr class="header">
