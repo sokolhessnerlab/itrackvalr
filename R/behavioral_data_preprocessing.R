@@ -72,7 +72,8 @@ get_all_hits_with_reaction_times <- function(participants, combined_df) {
 
     signals %>% mutate(
       hit_time = get_hit_times(signals$signal_time, responses$resp_time),
-      reaction_time = hit_time - signal_time
+      reaction_time = hit_time - signal_time,
+      is_hit = as.integer(!is.na(hit_time))
     )
   })
 }

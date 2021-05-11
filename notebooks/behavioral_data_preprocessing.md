@@ -1,5 +1,20 @@
-Behavioral Data Preprocessing
-================
+
+  - [Behavioral Data Preprocessing](#behavioral-data-preprocessing)
+      - [Load extracted CSV files](#load-extracted-csv-files)
+      - [Sanity checks](#sanity-checks)
+      - [Combined hits dataframe for all
+        participants](#combined-hits-dataframe-for-all-participants)
+      - [Check out a quick preview of the table of
+        hits](#check-out-a-quick-preview-of-the-table-of-hits)
+      - [Check out the reaction time summary statistics by
+        id:](#check-out-the-reaction-time-summary-statistics-by-id)
+      - [Gut-check plot of reaction times by signal
+        times](#gut-check-plot-of-reaction-times-by-signal-times)
+      - [Reaction times per participant centered at the
+        median](#reaction-times-per-participant-centered-at-the-median)
+
+# Behavioral Data Preprocessing
+
 Ari Dyckovsky
 
   - [Load extracted CSV files](#load-extracted-csv-files)
@@ -89,18 +104,18 @@ combined_hits_df <- get_all_hits_with_reaction_times(participants, combined_df)
 knitr::kable(head(combined_hits_df, 10))
 ```
 
-| trial | id     | image\_index |   signal\_time |     hit\_time | reaction\_time |
-| ----: | :----- | -----------: | -------------: | ------------: | -------------: |
-|    81 | CSN001 |          801 |  80.0604399294 |            NA |             NA |
-|   117 | CSN001 |          941 | 116.0665163944 | 116.984091845 | 0.917575450165 |
-|   119 | CSN001 |         3131 | 118.0679634164 |            NA |             NA |
-|   211 | CSN001 |         1325 | 210.0571848214 |            NA |             NA |
-|   235 | CSN001 |          752 | 234.0716901990 |            NA |             NA |
-|   361 | CSN001 |          103 | 360.0647047530 |            NA |             NA |
-|   461 | CSN001 |         2804 | 460.0590288559 |            NA |             NA |
-|   591 | CSN001 |           28 | 590.0714484362 |            NA |             NA |
-|   823 | CSN001 |          929 | 822.0630183384 | 822.772524834 | 0.709506495599 |
-|   845 | CSN001 |          517 | 844.0589960678 | 845.923186561 | 1.864190493347 |
+| trial | id     | image\_index |   signal\_time |     hit\_time | reaction\_time | is\_hit |
+| ----: | :----- | -----------: | -------------: | ------------: | -------------: | ------: |
+|    81 | CSN001 |          801 |  80.0604399294 |            NA |             NA |       0 |
+|   117 | CSN001 |          941 | 116.0665163944 | 116.984091845 | 0.917575450165 |       1 |
+|   119 | CSN001 |         3131 | 118.0679634164 |            NA |             NA |       0 |
+|   211 | CSN001 |         1325 | 210.0571848214 |            NA |             NA |       0 |
+|   235 | CSN001 |          752 | 234.0716901990 |            NA |             NA |       0 |
+|   361 | CSN001 |          103 | 360.0647047530 |            NA |             NA |       0 |
+|   461 | CSN001 |         2804 | 460.0590288559 |            NA |             NA |       0 |
+|   591 | CSN001 |           28 | 590.0714484362 |            NA |             NA |       0 |
+|   823 | CSN001 |          929 | 822.0630183384 | 822.772524834 | 0.709506495599 |       1 |
+|   845 | CSN001 |          517 | 844.0589960678 | 845.923186561 | 1.864190493347 |       1 |
 
 ## Check out the reaction time summary statistics by id:
 
