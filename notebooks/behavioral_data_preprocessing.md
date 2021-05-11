@@ -1,20 +1,5 @@
-
-  - [Behavioral Data Preprocessing](#behavioral-data-preprocessing)
-      - [Load extracted CSV files](#load-extracted-csv-files)
-      - [Sanity checks](#sanity-checks)
-      - [Combined hits dataframe for all
-        participants](#combined-hits-dataframe-for-all-participants)
-      - [Check out a quick preview of the table of
-        hits](#check-out-a-quick-preview-of-the-table-of-hits)
-      - [Check out the reaction time summary statistics by
-        id:](#check-out-the-reaction-time-summary-statistics-by-id)
-      - [Gut-check plot of reaction times by signal
-        times](#gut-check-plot-of-reaction-times-by-signal-times)
-      - [Reaction times per participant centered at the
-        median](#reaction-times-per-participant-centered-at-the-median)
-
-# Behavioral Data Preprocessing
-
+Behavioral Data Preprocessing
+================
 Ari Dyckovsky
 
   - [Load extracted CSV files](#load-extracted-csv-files)
@@ -29,6 +14,10 @@ Ari Dyckovsky
     times](#gut-check-plot-of-reaction-times-by-signal-times)
   - [Reaction times per participant centered at the
     median](#reaction-times-per-participant-centered-at-the-median)
+  - [Predict `is_hit` using
+    `signal_time`](#predict-is_hit-using-signal_time)
+  - [Predict `reaction_time` using
+    `signal_time`](#predict-reaction_time-using-signal_time)
 
 ## Load extracted CSV files
 
@@ -188,3 +177,51 @@ combined_hits_df %>%
 ```
 
 ![](behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+## Predict `is_hit` using `signal_time`
+
+``` r
+glmer(is_hit ~ 1 + signal_time + (1 | id), data = combined_hits_df, family = "binomial")
+```
+
+    ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
+    ## ]
+    ##  Family: binomial  ( logit )
+    ## Formula: is_hit ~ 1 + signal_time + (1 | id)
+    ##    Data: combined_hits_df
+    ##        AIC        BIC     logLik   deviance   df.resid 
+    ##  2307.4517  2323.9384 -1150.7259  2301.4517       1797 
+    ## Random effects:
+    ##  Groups Name        Std.Dev.   
+    ##  id     (Intercept) 0.835867156
+    ## Number of obs: 1800, groups:  id, 50
+    ## Fixed Effects:
+    ##     (Intercept)      signal_time  
+    ##  0.230697538840  -0.000238787222  
+    ## fit warnings:
+    ## Some predictor variables are on very different scales: consider rescaling
+    ## optimizer (Nelder_Mead) convergence code: 0 (OK) ; 0 optimizer warnings; 3 lme4 warnings
+
+## Predict `reaction_time` using `signal_time`
+
+``` r
+lmer(
+  reaction_time ~ 1 + signal_time + (1 | id), 
+  data = combined_hits_df %>% na.omit()
+)
+```
+
+    ## Linear mixed model fit by REML ['lmerMod']
+    ## Formula: reaction_time ~ 1 + signal_time + (1 | id)
+    ##    Data: combined_hits_df %>% na.omit()
+    ## REML criterion at convergence: 2479.3594
+    ## Random effects:
+    ##  Groups   Name        Std.Dev.   
+    ##  id       (Intercept) 0.503022374
+    ##  Residual             1.033061196
+    ## Number of obs: 821, groups:  id, 50
+    ## Fixed Effects:
+    ##    (Intercept)     signal_time  
+    ## 1.424493424274  0.000215076618  
+    ## fit warnings:
+    ## Some predictor variables are on very different scales: consider rescaling

@@ -21,6 +21,7 @@ library(gtsummary)
 library(targets)
 library(here)
 library(withr)
+library(lme4)
 
 # R options
 options(
@@ -143,4 +144,17 @@ combined_hits_df %>%
   coord_flip()
 ```
 
+## Predict `is_hit` using `signal_time`
 
+```{r}
+glmer(is_hit ~ 1 + signal_time + (1 | id), data = combined_hits_df, family = "binomial")
+```
+
+## Predict `reaction_time` using `signal_time`
+
+```{r}
+lmer(
+  reaction_time ~ 1 + signal_time + (1 | id), 
+  data = combined_hits_df %>% na.omit()
+)
+```
