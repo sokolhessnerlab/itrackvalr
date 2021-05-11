@@ -72,11 +72,11 @@ combined_df %>%
   summarise(mean(n), sd(n), min(n), max(n))
 ```
 
-## Function definitions
+## Combined hits dataframe for all participants
 
 The function to get each participant's hit times vector is `itrackvalr::get_hit_times`, and the function to get a dataframe of all participants' hits is `itrackvalr::get_all_hits_with_reaction_times`, including each hit time and reaction time between that hit time and the nearest signal prompting a response within a fixed interval.
 
-## Get the combined hits using the function
+Get the combined hits using the function:
 
 ```{r}
 combined_hits_df <- get_all_hits_with_reaction_times(participants, combined_df)

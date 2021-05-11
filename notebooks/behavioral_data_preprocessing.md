@@ -4,9 +4,8 @@ Ari Dyckovsky
 
   - [Load extracted CSV files](#load-extracted-csv-files)
   - [Sanity checks](#sanity-checks)
-  - [Function definitions](#function-definitions)
-  - [Get the combined hits using the
-    function](#get-the-combined-hits-using-the-function)
+  - [Combined hits dataframe for all
+    participants](#combined-hits-dataframe-for-all-participants)
   - [Check out a quick preview of the table of
     hits](#check-out-a-quick-preview-of-the-table-of-hits)
   - [Check out the reaction time summary statistics by
@@ -70,7 +69,7 @@ combined_df %>%
     ##       <dbl>   <dbl>    <int>    <int>
     ## 1      37.3    32.9        4      170
 
-## Function definitions
+## Combined hits dataframe for all participants
 
 The function to get each participant’s hit times vector is
 `itrackvalr::get_hit_times`, and the function to get a dataframe of all
@@ -78,7 +77,7 @@ participants’ hits is `itrackvalr::get_all_hits_with_reaction_times`,
 including each hit time and reaction time between that hit time and the
 nearest signal prompting a response within a fixed interval.
 
-## Get the combined hits using the function
+Get the combined hits using the function:
 
 ``` r
 combined_hits_df <- get_all_hits_with_reaction_times(participants, combined_df)

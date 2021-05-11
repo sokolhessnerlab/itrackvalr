@@ -605,8 +605,7 @@ body {
 <ul>
 <li><a href="#load-extracted-csv-files">Load extracted CSV files</a></li>
 <li><a href="#sanity-checks">Sanity checks</a></li>
-<li><a href="#function-definitions">Function definitions</a></li>
-<li><a href="#get-the-combined-hits-using-the-function">Get the combined hits using the function</a></li>
+<li><a href="#combined-hits-dataframe-for-all-participants">Combined hits dataframe for all participants</a></li>
 <li><a href="#check-out-a-quick-preview-of-the-table-of-hits">Check out a quick preview of the table of hits</a></li>
 <li><a href="#check-out-the-reaction-time-summary-statistics-by-id">Check out the reaction time summary statistics by id:</a></li>
 <li><a href="#gut-check-plot-of-reaction-times-by-signal-times">Gut-check plot of reaction times by signal times</a></li>
@@ -645,9 +644,9 @@ body {
 ##       &lt;dbl&gt;   &lt;dbl&gt;    &lt;int&gt;    &lt;int&gt;
 ## 1      37.3    32.9        4      170
 </code></pre>
-<h2 id="function-definitions">Function definitions</h2>
+<h2 id="combined-hits-dataframe-for-all-participants">Combined hits dataframe for all participants</h2>
 <p>The function to get each participant’s hit times vector is <code>itrackvalr::get_hit_times</code>, and the function to get a dataframe of all participants’ hits is <code>itrackvalr::get_all_hits_with_reaction_times</code>, including each hit time and reaction time between that hit time and the nearest signal prompting a response within a fixed interval.</p>
-<h2 id="get-the-combined-hits-using-the-function">Get the combined hits using the function</h2>
+<p>Get the combined hits using the function:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>combined_hits_df &lt;-<span class="st"> </span><span class="kw">get_all_hits_with_reaction_times</span>(participants, combined_df)</span></code></pre></div>
 <h2 id="check-out-a-quick-preview-of-the-table-of-hits">Check out a quick preview of the table of hits</h2>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">head</span>(combined_hits_df, <span class="dv">10</span>))</span></code></pre></div>

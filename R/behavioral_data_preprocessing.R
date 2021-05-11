@@ -6,17 +6,36 @@
 #' @note Use the .interval variable if 8 seconds is not the desired interval
 #' @export
 get_hit_times <- function(signal_times, response_times, .interval = 8.0) {
+
+  # Create vector to hold hit indices
+  hit_indices <- c()
+
   signal_times %>%
     map_dbl(function(signal_time) {
 
-      hit_index <- first(which(
+      # Find indices for potential hits within the signal interval
+      potential_hit_indices <- which(
         response_times %>%
           map_lgl(~ between(.x, signal_time, signal_time + .interval)),
         arr.ind = TRUE
-      ))
+      )
 
+      # If there are zero potential hits for this signal time, return NA
+      if (!length(potential_hit_indices)) return(NA)
+
+      # Remove existing hit indices from potential hit indices for this signal
+      potential_hit_indices <- setdiff(potential_hit_indices, hit_indices)
+
+      # Extract the first hit index (closest to signal time)
+      hit_index <- first(potential_hit_indices)
+
+      # Extract hit time from response times using hit index
       hit_time <- response_times[hit_index]
 
+      # Update vector of hit indices
+      hit_indices <- c(hit_indices, hit_index)
+
+      # Return the hit time
       return(hit_time)
 
     })
