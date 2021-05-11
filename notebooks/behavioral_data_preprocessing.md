@@ -11,8 +11,10 @@ Ari Dyckovsky
     hits](#check-out-a-quick-preview-of-the-table-of-hits)
   - [Check out the reaction time summary statistics by
     id:](#check-out-the-reaction-time-summary-statistics-by-id)
-  - [Show plot of reaction times by signal
-    times](#show-plot-of-reaction-times-by-signal-times)
+  - [Gut-check plot of reaction times by signal
+    times](#gut-check-plot-of-reaction-times-by-signal-times)
+  - [Reaction times per participant centered at the
+    median](#reaction-times-per-participant-centered-at-the-median)
 
 ## Load extracted CSV files
 
@@ -70,76 +72,16 @@ combined_df %>%
 
 ## Function definitions
 
-The function to get each participant’s hit time:
-
-``` r
-HIT_INTERVAL <- 8
-
-# Get hit timestampe from a vector of signal times and a vector of response times
-# Use the .interval variable if HIT_INTERVAL is not defined or a different hit interval is desired
-get_hit_time <- function(signal_times, response_times, .interval = HIT_INTERVAL) {
-  signal_times %>% 
-    map_dbl(function(signal_time) {
-      
-      hit_index <- first(which(
-        response_times %>% 
-          map_lgl(~ between(.x, signal_time, signal_time + .interval)),
-        arr.ind = TRUE
-      ))
-      
-      hit_time <- response_times[hit_index]
-      
-      return(hit_time)
-      
-    })
-}
-```
-
-The function to get a dataframe of combined hits, including the hit time
-itself, and the reaction time between that hit time and the signal
-prompting that response.
-
-``` r
-# Get combined hits dataframe composed of each participant's hit times and
-# reaction times for those hits, row-by-row with signal times.
-# Uses both combined signals and responses
-get_combined_hits <- function(participants, combined_df) {
-  
-  # Extract only rows where a signal is present
-  combined_signals_df <- combined_df %>%
-    filter(is_signal == 1) %>%
-    mutate(
-      signal_time = step_time
-    ) %>%
-    select(trial, id, image_index, signal_time)
-  
-  # Extract only rows where a response attempt is present
-  combined_responses_df <- combined_df %>%
-    filter(is_response == 1) %>%
-    select(trial, id, image_index, resp_time)
-  
-  # Map over the unlisted participants' ids to get the per-participant
-  # signals and responses, then return a combined dataframe of all participant
-  # including trial rows for signals, and if it exists, hit time and reaction time
-  map_dfr(unlist(participants), function(participant) {
-    participant_signals <- combined_signals_df %>%
-      filter(id == participant)
-    
-    participant_responses <- combined_responses_df %>%
-      filter(id == participant)
-      
-    participant_signals %>% mutate(
-        hit_time = get_hit_time(participant_signals$signal_time, participant_responses$resp_time),
-        reaction_time = hit_time - signal_time
-      )
-  })
-}
-```
+The function to get each participant’s hit times vector is
+`itrackvalr::get_hit_times`, and the function to get a dataframe of all
+participants’ hits is `itrackvalr::get_all_hits_with_reaction_times`,
+including each hit time and reaction time between that hit time and the
+nearest signal prompting a response within a fixed interval.
 
 ## Get the combined hits using the function
 
 ``` r
-combined_hits_df <- get_combined_hits(participants, combined_df)
+combined_hits_df <- get_all_hits_with_reaction_times(participants, combined_df)
 ```
 
 ## Check out a quick preview of the table of hits
@@ -191,10 +133,9 @@ knitr::kable(head(
 | CSN010 |        2.15590923006 |      0.246194777312 |       7.99283455560 |     2.249618738692 |
 | CSN011 |        1.36405598454 |      0.692828005016 |       3.64924517583 |     0.651777575973 |
 
-## Show plot of reaction times by signal times
+## Gut-check plot of reaction times by signal times
 
-For hits, the reaction time does increase slightly across all
-participants.
+Note the 1.000s to 1.100s gap where hits were not recorded.
 
 ``` r
 combined_hits_df %>%
@@ -205,4 +146,31 @@ combined_hits_df %>%
     theme_classic()
 ```
 
-![](behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+## Reaction times per participant centered at the median
+
+``` r
+combined_hits_df %>%
+  drop_na() %>%
+  arrange(reaction_time) %>%
+  ggplot(aes(x = reorder(id, reaction_time, FUN = median), y = reaction_time)) +
+    geom_point(alpha = 0.8, size = 0.7, color = 'darkblue', position = 'jitter') +
+    geom_boxplot(alpha = 0) +
+    geom_hline(yintercept = 1, color = 'coral') +
+  theme_minimal() +
+  theme(
+    aspect.ratio = 1,
+    text = element_text(size = 15),
+    plot.margin = margin(18, 18, 18, 18, 'pt')
+  ) +
+  labs(
+    title = 'Reaction times of participants by id',
+    subtitle = 'Boxplot per participant anchored at median of reaction time',
+    y = 'Reaction time for HIT after double-tick signal',
+    x = 'Participant'
+  ) +
+  coord_flip()
+```
+
+![](behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
