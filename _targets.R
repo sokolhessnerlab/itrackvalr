@@ -1,8 +1,7 @@
 library(targets)
 library(tarchetypes)
 library(future)
-library(R.matlab)
-library(tibble)
+library(tidyverse)
 
 # Options
 options(tidyverse.quiet = TRUE)
@@ -11,8 +10,10 @@ options(tidyverse.quiet = TRUE)
 plan(multisession)
 
 # Load functions
+source('R/utils-pipe.R')
 source('R/extract.R')
 source('R/clean.R')
+source('R/behavioral_data_preprocessing.R')
 
 # Packages
 tar_option_set(
@@ -21,7 +22,7 @@ tar_option_set(
     "config",
     "knitr",
     "kableExtra",
-    "tidyverse",
+    "tibble",
     "R.matlab"
   )
 )

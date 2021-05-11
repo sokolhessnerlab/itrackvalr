@@ -3,7 +3,7 @@
     "Version": "4.0.4",
     "Repositories": [
       {
-        "Name": "https://cran.rstudio.com",
+        "Name": null,
         "URL": "https://cran.rstudio.com"
       }
     ]
@@ -197,6 +197,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "06015476250468fc013c30022118ce3a"
+    },
+    "broom.helpers": {
+      "Package": "broom.helpers",
+      "Version": "1.3.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5c1de296bcf7de71924b40359371bede"
     },
     "bs4Dash": {
       "Package": "bs4Dash",
@@ -618,6 +625,13 @@
       "Repository": "CRAN",
       "Hash": "ac5c6baf7822ce8732b343f14c072c4d"
     },
+    "gtsummary": {
+      "Package": "gtsummary",
+      "Version": "1.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "6f08839f37de0f122a8ed6845a33942e"
+    },
     "haven": {
       "Package": "haven",
       "Version": "2.4.1",
@@ -736,6 +750,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "3d5108641f47470611a32d0bdf357a72"
+    },
+    "labelled": {
+      "Package": "labelled",
+      "Version": "2.8.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "41e3b9df8e07dba367a58462cc328721"
     },
     "later": {
       "Package": "later",
