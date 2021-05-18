@@ -800,6 +800,13 @@
       "Repository": "CRAN",
       "Hash": "5f2466f5127e0ce67e44bb381387eeca"
     },
+    "lmerTest": {
+      "Package": "lmerTest",
+      "Version": "3.1-3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f04948de84602afc23bfa9f5427e954d"
+    },
     "lubridate": {
       "Package": "lubridate",
       "Version": "1.7.10",
