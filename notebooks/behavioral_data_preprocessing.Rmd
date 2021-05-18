@@ -145,13 +145,24 @@ combined_hits_df %>%
   coord_flip()
 ```
 
+## Scale times to [0,1] interval for modeling
+
+```{r}
+scaled_combined_hits_df <- combined_hits_df %>%
+  mutate(
+    signal_time = signal_time / 3600,
+    reaction_time = reaction_time / 3600
+  )
+```
+
 ## Predict `is_hit` using `signal_time`
 
 ```{r}
 model_pHit_signaltime_MFX = glmer(
   is_hit ~ 1 + signal_time + (1 | id),
-  data = combined_hits_df,
-  family = "binomial")
+  data = scaled_combined_hits_df,
+  family = "binomial"
+)
 
 summary(model_pHit_signaltime_MFX)
 ```
@@ -161,7 +172,7 @@ summary(model_pHit_signaltime_MFX)
 ```{r}
 model_RT_signaltime_MFX = lmer(
   reaction_time ~ 1 + signal_time + (1 | id),
-  data = combined_hits_df %>% na.omit()
+  data = scaled_combined_hits_df %>% na.omit()
 )
 
 summary(model_RT_signaltime_MFX)
