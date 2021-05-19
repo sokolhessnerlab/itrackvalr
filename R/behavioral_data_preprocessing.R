@@ -45,7 +45,11 @@ get_hit_times <- function(signal_times, response_times, .interval = 8.0) {
 #' @description Creates a dataframe composed of each participant's hit times and
 #'   reaction times for those hits, row-by-row with signal times.
 #' @export
-get_all_hits_with_reaction_times <- function(participants, combined_df) {
+get_all_hits_with_reaction_times <- function(combined_df) {
+
+  participants <- combined_df %>%
+    pull(id) %>%
+    unique()
 
   # Extract only rows where a signal is present
   all_signals_df <- combined_df %>%
@@ -63,7 +67,7 @@ get_all_hits_with_reaction_times <- function(participants, combined_df) {
   # Map over the unlisted participants' ids to get the per-participant
   # signals and responses, then return a combined dataframe of all participant
   # including trial rows for signals, and if it exists, hit time and reaction time
-  map_dfr(unlist(participants), function(participant) {
+  map_dfr(participants, function(participant) {
     signals <- all_signals_df %>%
       filter(id == participant)
 
