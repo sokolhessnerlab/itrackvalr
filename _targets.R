@@ -74,6 +74,19 @@ combined_behavioral <- tar_combine(
     dplyr::select(-c(resp_type, step_type))
 )
 
+summary_reports <- list(
+  tar_render(
+    incompletes,
+    "notebooks/incompletes.Rmd",
+    output_dir = "output"
+  ),
+  tar_render(
+    exclusions,
+    "notebooks/exclusions.Rmd",
+    output_dir = "output"
+  )
+)
+
 list(
   mapped_extraction,
   combined_behavioral,
@@ -83,6 +96,8 @@ list(
   ),
   tar_render(
     behavioral_data_preprocessing_notebook,
-    "notebooks/behavioral_data_preprocessing.Rmd"
-  )
+    "notebooks/behavioral_data_preprocessing.Rmd",
+    output_dir = "output"
+  ),
+  summary_reports
 )

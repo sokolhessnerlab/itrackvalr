@@ -65,7 +65,9 @@ The function to get each participant's hit times vector is `itrackvalr::get_hit_
 Get the combined hits using the function:
 
 ```{r}
-combined_hits_df <- tar_read(all_hits_with_reaction_times)
+withr::with_dir(here::here(), {
+  combined_hits_df <- tar_read(all_hits_with_reaction_times)
+})
 ```
 
 ## Check out a quick preview of the table of hits

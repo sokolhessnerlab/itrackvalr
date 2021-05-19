@@ -73,7 +73,9 @@ nearest signal prompting a response within a fixed interval.
 Get the combined hits using the function:
 
 ``` r
-combined_hits_df <- tar_read(all_hits_with_reaction_times)
+withr::with_dir(here::here(), {
+  combined_hits_df <- tar_read(all_hits_with_reaction_times)
+})
 ```
 
 ## Check out a quick preview of the table of hits
@@ -138,7 +140,7 @@ combined_hits_df %>%
     theme_classic()
 ```
 
-![](behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](/Users/metis/Projects/sokolhessnerlab/itrackvalr/output/behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ## Reaction times per participant centered at the median
 
@@ -165,7 +167,7 @@ combined_hits_df %>%
   coord_flip()
 ```
 
-![](behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](/Users/metis/Projects/sokolhessnerlab/itrackvalr/output/behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ## Scale times to \[0,1\] interval for modeling
 
