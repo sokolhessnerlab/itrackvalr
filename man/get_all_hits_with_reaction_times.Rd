@@ -4,7 +4,7 @@
 \alias{get_all_hits_with_reaction_times}
 \title{Get all participants' hits with reaction times}
 \usage{
-get_all_hits_with_reaction_times(participants, combined_df)
+get_all_hits_with_reaction_times(combined_df)
 }
 \description{
 Creates a dataframe composed of each participant's hit times and
