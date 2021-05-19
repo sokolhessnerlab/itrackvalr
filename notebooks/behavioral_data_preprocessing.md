@@ -1,29 +1,8 @@
-
-  - [Behavioral Data Preprocessing](#behavioral-data-preprocessing)
-      - [Load extracted CSV files](#load-extracted-csv-files)
-      - [Sanity checks](#sanity-checks)
-      - [Combined hits dataframe for all
-        participants](#combined-hits-dataframe-for-all-participants)
-      - [Check out a quick preview of the table of
-        hits](#check-out-a-quick-preview-of-the-table-of-hits)
-      - [Check out the reaction time summary statistics by
-        id:](#check-out-the-reaction-time-summary-statistics-by-id)
-      - [Gut-check plot of reaction times by signal
-        times](#gut-check-plot-of-reaction-times-by-signal-times)
-      - [Reaction times per participant centered at the
-        median](#reaction-times-per-participant-centered-at-the-median)
-      - [Scale times to \[0,1\] interval for
-        modeling](#scale-times-to-01-interval-for-modeling)
-      - [Predict `is_hit` using
-        `signal_time`](#predict-is_hit-using-signal_time)
-      - [Predict `reaction_time` using
-        `signal_time`](#predict-reaction_time-using-signal_time)
-
-# Behavioral Data Preprocessing
-
+Behavioral Data Preprocessing
+================
 Ari Dyckovsky
 
-  - [Load extracted CSV files](#load-extracted-csv-files)
+  - [Load extracted behavioral data](#load-extracted-behavioral-data)
   - [Sanity checks](#sanity-checks)
   - [Combined hits dataframe for all
     participants](#combined-hits-dataframe-for-all-participants)
@@ -37,31 +16,29 @@ Ari Dyckovsky
     median](#reaction-times-per-participant-centered-at-the-median)
   - [Scale times to \[0,1\] interval for
     modeling](#scale-times-to-01-interval-for-modeling)
-  - [Predict `is_hit` using
-    `signal_time`](#predict-is_hit-using-signal_time)
+  - [Predict the probability of a hit by signal
+    time](#predict-the-probability-of-a-hit-by-signal-time)
+      - [Predict the probability of a hit by signal time with signal
+        time random
+        effects](#predict-the-probability-of-a-hit-by-signal-time-with-signal-time-random-effects)
   - [Predict `reaction_time` using
     `signal_time`](#predict-reaction_time-using-signal_time)
 
-## Load extracted CSV files
+## Load extracted behavioral data
 
-Construct a list of the extracted behavioral CSV file targets by
-participant.
-
-``` r
-extracted_behavioral_csv_files <- participants %>%
-  unlist(use.names = FALSE) %>%
-  map(~ str_c("extracted_behavioral_csv_file_", .x))
-```
-
-Read CSVs into dataframe `combined_df` after using `tar_read_raw` to get
-the file path for participants from targets. Will include *all*
-participants and include an `id` column to identify the participant
-individually.
+Use `tar_load` to get the target objects per participant using the
+`tidyselect` syntax `starts_with` and load each object into a new
+environment `envir`. Then, convert the environment to a list and map
+each into a dataframe that binds rows of each participant’s data
+together. This `combined_df` will include *all* participants and include
+an `id` column to identify the participant individually.
 
 ``` r
 withr::with_dir(here::here(), {
-  combined_df <- extracted_behavioral_csv_files %>%
-    map_df(~ read_csv(tar_read_raw(.)))
+  envir <- new.env()
+  tar_load(starts_with("extracted_behavioral_data_"), envir = envir)
+  combined_df <- as.list(envir) %>%
+    map_df(~ .)
 })
 
 # Transform step and response types to 0 or 1 integer values to simulate boolean behavior.
@@ -172,7 +149,7 @@ combined_hits_df %>%
     theme_classic()
 ```
 
-![](behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ## Reaction times per participant centered at the median
 
@@ -199,7 +176,7 @@ combined_hits_df %>%
   coord_flip()
 ```
 
-![](behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ## Scale times to \[0,1\] interval for modeling
 
@@ -207,18 +184,22 @@ combined_hits_df %>%
 scaled_combined_hits_df <- combined_hits_df %>%
   mutate(
     signal_time = signal_time / 3600,
-    reaction_time = reaction_time / 3600
+    reaction_time = reaction_time
   )
 ```
 
-## Predict `is_hit` using `signal_time`
+## Predict the probability of a hit by signal time
 
 ``` r
-model_pHit_signaltime_MFX = glmer(
-  is_hit ~ 1 + signal_time + (1 | id),
-  data = scaled_combined_hits_df,
-  family = "binomial"
-)
+hit_by_signal_time_model <- function(df) {
+  glmer(
+    is_hit ~ 1 + signal_time + (1 | id),
+    data = df,
+    family = "binomial"
+  )
+}
+
+model_pHit_signaltime_MFX <- hit_by_signal_time_model(scaled_combined_hits_df)
 
 summary(model_pHit_signaltime_MFX)
 ```
@@ -227,7 +208,7 @@ summary(model_pHit_signaltime_MFX)
     ## ]
     ##  Family: binomial  ( logit )
     ## Formula: is_hit ~ 1 + signal_time + (1 | id)
-    ##    Data: scaled_combined_hits_df
+    ##    Data: df
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
     ##   2307.5   2323.9  -1150.7   2301.5     1797 
@@ -252,6 +233,12 @@ summary(model_pHit_signaltime_MFX)
     ##             (Intr)
     ## signal_time -0.572
 
+### Predict the probability of a hit by signal time with signal time random effects
+
+``` r
+#is_hit ~ 1 + signal_time + (1 + signal_time | id)
+```
+
 ## Predict `reaction_time` using `signal_time`
 
 ``` r
@@ -267,22 +254,22 @@ summary(model_RT_signaltime_MFX)
     ## Formula: reaction_time ~ 1 + signal_time + (1 | id)
     ##    Data: scaled_combined_hits_df %>% na.omit()
     ## 
-    ## REML criterion at convergence: -10950.1
+    ## REML criterion at convergence: 2463
     ## 
     ## Scaled residuals: 
     ##          Min           1Q       Median           3Q          Max 
     ## -1.856746002 -0.522942508 -0.203867491  0.199189511  5.955977930 
     ## 
     ## Random effects:
-    ##  Groups   Name        Variance       Std.Dev.      
-    ##  id       (Intercept) 1.95240362e-08 0.000139728437
-    ##  Residual             8.23468700e-08 0.000286961443
+    ##  Groups   Name        Variance    Std.Dev.   
+    ##  id       (Intercept) 0.253031509 0.503022374
+    ##  Residual             1.067215435 1.033061196
     ## Number of obs: 821, groups:  id, 50
     ## 
     ## Fixed effects:
-    ##                   Estimate     Std. Error             df  t value   Pr(>|t|)    
-    ## (Intercept) 3.95692618e-04 2.78399281e-05 1.05550683e+02 14.21313 < 2.22e-16 ***
-    ## signal_time 2.15076618e-04 3.57059791e-05 7.93026667e+02  6.02355 2.6097e-09 ***
+    ##                  Estimate    Std. Error            df  t value   Pr(>|t|)    
+    ## (Intercept)   1.424493424   0.100223741 105.550683060 14.21313 < 2.22e-16 ***
+    ## signal_time   0.774275825   0.128541525 793.026666766  6.02355 2.6097e-09 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 

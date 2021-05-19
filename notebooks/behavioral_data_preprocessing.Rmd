@@ -17,6 +17,7 @@ options(knitr.table.format = "markdown")
 
 # Load packages
 library(tidyverse)
+library(broom)
 library(gtsummary)
 library(targets)
 library(here)
@@ -31,22 +32,16 @@ options(
 ```
 
 
-## Load extracted CSV files
+## Load extracted behavioral data 
 
-Construct a list of the extracted behavioral CSV file targets by participant.
+Use `tar_load` to get the target objects per participant using the `tidyselect` syntax `starts_with` and load each object into a new environment `envir`. Then, convert the environment to a list and map each into a dataframe that binds rows of each participant's data together. This `combined_df` will include _all_ participants and include an `id` column to identify the participant individually.
 
-```{r}
-extracted_behavioral_csv_files <- participants %>%
-  unlist(use.names = FALSE) %>%
-  map(~ str_c("extracted_behavioral_csv_file_", .x))
-```
-
-Read CSVs into dataframe `combined_df` after using `tar_read_raw` to get the file path for participants from targets. Will include _all_ participants and include an `id` column to identify the participant individually.
-
-```{r, get-combined-data}
+```{r load-data}
 withr::with_dir(here::here(), {
-  combined_df <- extracted_behavioral_csv_files %>%
-    map_df(~ read_csv(tar_read_raw(.)))
+  envir <- new.env()
+  tar_load(starts_with("extracted_behavioral_data_"), envir = envir)
+  combined_df <- as.list(envir) %>%
+    map_df(~ .)
 })
 
 # Transform step and response types to 0 or 1 integer values to simulate boolean behavior.
@@ -151,20 +146,30 @@ combined_hits_df %>%
 scaled_combined_hits_df <- combined_hits_df %>%
   mutate(
     signal_time = signal_time / 3600,
-    reaction_time = reaction_time / 3600
+    reaction_time = reaction_time
   )
 ```
 
-## Predict `is_hit` using `signal_time`
+## Predict the probability of a hit by signal time
 
 ```{r}
-model_pHit_signaltime_MFX = glmer(
-  is_hit ~ 1 + signal_time + (1 | id),
-  data = scaled_combined_hits_df,
-  family = "binomial"
-)
+hit_by_signal_time_model <- function(df) {
+  glmer(
+    is_hit ~ 1 + signal_time + (1 | id),
+    data = df,
+    family = "binomial"
+  )
+}
+
+model_pHit_signaltime_MFX <- hit_by_signal_time_model(scaled_combined_hits_df)
 
 summary(model_pHit_signaltime_MFX)
+```
+
+### Predict the probability of a hit by signal time with signal time random effects
+
+```{r}
+#is_hit ~ 1 + signal_time + (1 + signal_time | id)
 ```
 
 ## Predict `reaction_time` using `signal_time`
