@@ -1313,10 +1313,10 @@
     },
     "tarchetypes": {
       "Package": "tarchetypes",
-      "Version": "0.1.1",
+      "Version": "0.2.0",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "65a7e43f16ebb046fadfa6aeb2a69253"
+      "Hash": "a5270db1c2b225697a08c5612b44facb"
     },
     "targets": {
       "Package": "targets",
