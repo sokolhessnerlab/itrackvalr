@@ -8,7 +8,7 @@
 #' @export
 extract_behavioral_data <- function(mat_file, id_prefix = "CSN") {
   # Get the padded 3-digit id from the file name, including a prefix
-  participant_id <- str_extract(mat_file, str_c(id_prefix,"\\d{3}"))
+  participant_id <- stringr::str_extract(mat_file, str_c(id_prefix,"\\d{3}"))
 
   # Read MAT file and extract subject data
   mat_data <- readMat(mat_file)
@@ -31,13 +31,16 @@ extract_behavioral_data <- function(mat_file, id_prefix = "CSN") {
   )
 
   # Construct output file
-  output_file <- str_c(here::here(config$path$data, "extracted", "behavioral", participant_id), ".csv")
+  output_file <- stringr::str_c(
+    here::here(config$path$data, "extracted", "behavioral", participant_id),
+    ".csv"
+  )
 
   # Write dataframe to output file
-  write_csv(df, output_file)
+  readr::write_csv(df, output_file)
 
-  # Return path
-  return(output_file)
+  # Return df
+  return(df)
 }
 
 #################################################
