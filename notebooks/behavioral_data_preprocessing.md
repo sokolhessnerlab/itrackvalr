@@ -35,10 +35,7 @@ an `id` column to identify the participant individually.
 
 ``` r
 withr::with_dir(here::here(), {
-  envir <- new.env()
-  tar_load(starts_with("extracted_behavioral_data_"), envir = envir)
-  combined_df <- as.list(envir) %>%
-    map_df(~ .)
+  combined_df <- tar_read(extracted_behavioral_data_combined)
 })
 
 # Transform step and response types to 0 or 1 integer values to simulate boolean behavior.
