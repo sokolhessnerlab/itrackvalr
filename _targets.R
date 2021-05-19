@@ -24,22 +24,22 @@ tar_option_set(
     "kableExtra",
     "tibble",
     "R.matlab",
-    "stringr"
+    "stringr",
+    "dplyr",
+    "purrr"
   )
 )
 
 # Config
 config <- config::get()
 
-# Create a dataframe of participants' meta information using raw behavioral data response file names
-participants <- tibble(
-  id = list.files(here::here(config$path$data, "raw", "behavioral", "responses")) %>%
-    purrr::map(~ stringr::str_extract(.x, "CSN\\d{3}"))
-)
-
 mapped_extraction <- tar_map(
-  #unlist = FALSE, # Return a nested list from tar_map()
-  values = participants,
+  unlist = FALSE, # Return a nested list from tar_map()
+  # Create a dataframe of participants' meta information using raw behavioral data response file names
+  values = tibble(
+    id = list.files(here::here(config$path$data, "raw", "behavioral", "responses")) %>%
+      purrr::map(~ stringr::str_extract(.x, "CSN\\d{3}"))
+  ),
   # Set raw behavioral file targets
   # TODO: change the `str_subset(...` to a function!
   tar_target(
@@ -65,12 +65,22 @@ mapped_extraction <- tar_map(
 combined_behavioral <- tar_combine(
   extracted_behavioral_data_combined,
   mapped_extraction$extracted_behavioral_data,
-  command = dplyr::bind_rows(!!!.x)
+  command = dplyr::bind_rows(!!!.x) %>%
+    dplyr::mutate(
+      # Transform step and response types to 0 or 1 integer values to simulate boolean behavior.
+      is_signal = as.integer(step_type > 1),
+      is_response = as.integer(resp_type)
+    ) %>%
+    dplyr::select(-c(resp_type, step_type))
 )
 
 list(
   mapped_extraction,
   combined_behavioral,
+  tar_target(
+    all_hits_with_reaction_times,
+    get_all_hits_with_reaction_times(extracted_behavioral_data_combined)
+  ),
   tar_render(
     behavioral_data_preprocessing_notebook,
     "notebooks/behavioral_data_preprocessing.Rmd"
