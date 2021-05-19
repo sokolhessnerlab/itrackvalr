@@ -12,7 +12,7 @@ plan(multisession)
 # Load functions
 source('R/utils-pipe.R')
 source('R/extract.R')
-source('R/clean.R')
+#source('R/clean.R')
 source('R/behavioral_data_preprocessing.R')
 
 # Packages
@@ -23,7 +23,8 @@ tar_option_set(
     "knitr",
     "kableExtra",
     "tibble",
-    "R.matlab"
+    "R.matlab",
+    "stringr"
   )
 )
 
@@ -57,11 +58,11 @@ list(
       format = "file"
     ),
 
-    # Extract behavioral CSV files and output path to them
+    # Extract behavitoral data from raw MAT and output dataframe
+    # Side effect: Writes dataframe as CSV to `data/extracted`
     tar_target(
-      extracted_behavioral_csv_file,
-      extract_behavioral_data(raw_behavioral_file),
-      format = "file"
+      extracted_behavioral_data,
+      extract_behavioral_data(raw_behavioral_file)
     )
   ),
   tar_render(
