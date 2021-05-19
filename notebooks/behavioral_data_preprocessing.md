@@ -37,14 +37,6 @@ an `id` column to identify the participant individually.
 withr::with_dir(here::here(), {
   combined_df <- tar_read(extracted_behavioral_data_combined)
 })
-
-# Transform step and response types to 0 or 1 integer values to simulate boolean behavior.
-combined_df <- combined_df %>%
-  mutate(
-    is_signal = as.integer(step_type > 1),
-    is_response = as.integer(resp_type)
-  ) %>%
-  select(-c(resp_type, step_type))
 ```
 
 ## Sanity checks
@@ -81,7 +73,7 @@ nearest signal prompting a response within a fixed interval.
 Get the combined hits using the function:
 
 ``` r
-combined_hits_df <- get_all_hits_with_reaction_times(participants, combined_df)
+combined_hits_df <- tar_read(all_hits_with_reaction_times)
 ```
 
 ## Check out a quick preview of the table of hits
