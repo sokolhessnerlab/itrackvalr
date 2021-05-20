@@ -14,6 +14,7 @@ source('R/utils-pipe.R')
 source('R/extract.R')
 #source('R/clean.R')
 source('R/behavioral_data_preprocessing.R')
+source('R/behavioral_data_models.R')
 
 # Packages
 tar_option_set(
@@ -58,7 +59,11 @@ mapped_extraction <- tar_map(
   # Side effect: Writes dataframe as CSV to `data/extracted`
   tar_target(
     extracted_behavioral_data,
-    extract_behavioral_data(raw_behavioral_file)
+    extract_behavioral_data(
+      config$path$data,
+      raw_behavioral_file,
+      id_prefix = "CSN"
+    )
   )
 )
 

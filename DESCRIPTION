@@ -27,4 +27,6 @@ Imports:
     targets,
     tarchetypes,
     here,
-    matlabr
+    matlabr,
+    lme4,
+    lmerTest

@@ -6,7 +6,7 @@
 
 #' @title Extract behavioral data from MAT file
 #' @export
-extract_behavioral_data <- function(mat_file, id_prefix = "CSN") {
+extract_behavioral_data <- function(data_path, mat_file, id_prefix = "CSN") {
   # Get the padded 3-digit id from the file name, including a prefix
   participant_id <- stringr::str_extract(mat_file, str_c(id_prefix,"\\d{3}"))
 
@@ -32,7 +32,7 @@ extract_behavioral_data <- function(mat_file, id_prefix = "CSN") {
 
   # Construct output file
   output_file <- stringr::str_c(
-    here::here(config$path$data, "extracted", "behavioral", participant_id),
+    here::here(data_path, "extracted", "behavioral", participant_id),
     ".csv"
   )
 

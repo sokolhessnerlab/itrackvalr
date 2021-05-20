@@ -4,7 +4,7 @@
 \alias{extract_behavioral_data}
 \title{Extract behavioral data from MAT file}
 \usage{
-extract_behavioral_data(mat_file, id_prefix = "CSN")
+extract_behavioral_data(data_path, mat_file, id_prefix = "CSN")
 }
 \description{
 Extract behavioral data from MAT file

@@ -1,5 +1,35 @@
-#' @title TODO
+#' @title Model participant hits by signal time
 #' @description TODO
 #' @export
-model <- function(df) {
+hit_by_signal_time_model <- function(df, random_effects = FALSE) {
+  if (random_effects) {
+    glmer(
+      is_hit ~ 1 + signal_time + (1 + signal_time | id),
+      data = df,
+      family = "binomial"
+    )
+  } else {
+    glmer(
+      is_hit ~ 1 + signal_time + (1 | id),
+      data = df,
+      family = "binomial"
+    )
+  }
+}
+
+#' @title Model participant reaction time by signal time
+#' @description TODO
+#' @export
+reaction_time_by_signal_time_model <- function(df, random_effects = FALSE) {
+  if (random_effects) {
+    lmer(
+      reaction_time ~ 1 + signal_time + (1 + signal_time | id),
+      data = df %>% na.omit()
+    )
+  } else {
+    lmer(
+      reaction_time ~ 1 + signal_time + (1 | id),
+      data = df %>% na.omit()
+    )
+  }
 }

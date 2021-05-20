@@ -1,5 +1,5 @@
 ---
-title: "Behavioral Data Preprocessing"
+title: "Behavioral Data Analysis"
 author: "Ari Dyckovsky"
 ---
 
@@ -16,12 +16,12 @@ knitr::opts_chunk$set(
 options(knitr.table.format = "markdown")
 
 # Load packages
-library(tidyverse)
-library(broom)
-library(gtsummary)
 library(targets)
 library(here)
 library(withr)
+library(tidyverse)
+library(broom)
+library(summarytools)
 library(lme4)
 library(lmerTest) # adds useful info to lme4 output
 
@@ -29,12 +29,16 @@ library(lmerTest) # adds useful info to lme4 output
 options(
   width = 90
 )
+
+# summarytools options
+st_options(
+  plain.ascii = FALSE
+)
 ```
 
+## Read extracted behavioral data
 
-## Load extracted behavioral data 
-
-Use `tar_load` to get the target objects per participant using the `tidyselect` syntax `starts_with` and load each object into a new environment `envir`. Then, convert the environment to a list and map each into a dataframe that binds rows of each participant's data together. This `combined_df` will include _all_ participants and include an `id` column to identify the participant individually.
+Use `tar_read` to get the target object `extracted_behavioral_data_combined` and assign it to `combined_df`.
 
 ```{r load-data}
 withr::with_dir(here::here(), {
@@ -42,45 +46,40 @@ withr::with_dir(here::here(), {
 })
 ```
 
-## Sanity checks
+### Sanity checks for extracted data
 
-Count of participants by unique id.
+Look at a few rows of data to verify output format.
 
-```{r}
+```{r see-data}
+knitr::kable(head(combined_df))
+```
+
+Check count of participants by unique id.
+
+```{r, count-participants}
 length(unique(combined_df$id))
 ```
 
-```{r}
-combined_df %>%
-  select(trial, id, is_response, is_signal, resp_time, step_time) %>%
-  group_by(id) %>%
-  tally(is_response) %>%
-  summarise(mean(n), sd(n), min(n), max(n))
-```
+## Analyze all participants' hits with reaction times
 
-## Combined hits dataframe for all participants
+Read targets object `all_hits_with_reaction_times` and assign to the combined hits dataframe `combined_hits_df`.
 
-The function to get each participant's hit times vector is `itrackvalr::get_hit_times`, and the function to get a dataframe of all participants' hits is `itrackvalr::get_all_hits_with_reaction_times`, including each hit time and reaction time between that hit time and the nearest signal prompting a response within a fixed interval.
-
-Get the combined hits using the function:
-
-```{r}
+```{r read-combined-hits}
 withr::with_dir(here::here(), {
   combined_hits_df <- tar_read(all_hits_with_reaction_times)
 })
 ```
 
-## Check out a quick preview of the table of hits
+Check out a quick preview of the table of hits
 
-```{r}
-knitr::kable(head(combined_hits_df, 10))
+```{r preview-combined-hits}
+knitr::kable(head(combined_hits_df))
 ```
 
-## Check out the reaction time summary statistics by id:
+Check out the reaction time summary statistics by id:
 
-```{r}
-knitr::kable(head(
-  combined_hits_df %>%
+```{r summary-stats-combined-hits}
+combined_hits_df %>%
     drop_na() %>%
     group_by(id) %>%
     summarise(
@@ -88,16 +87,14 @@ knitr::kable(head(
       reaction_time_min = min(reaction_time),
       reaction_time_max = max(reaction_time),
       reaction_time_sd = sd(reaction_time)
-    ),
-  10
-))
+    ) %>%
+  head() %>%
+  knitr::kable()
 ```
 
-## Gut-check plot of reaction times by signal times
+Check plot of all reaction times by signal times. (Note the 100ms gaps where responses were not recorded at 1-1.1, 2-2.1, ...)
 
-Note the 1.000s to 1.100s gap where hits were not recorded.
-
-```{r}
+```{r all-reaction-times-by-signal-times-plot}
 combined_hits_df %>%
   drop_na() %>%
   ggplot(aes(x = signal_time, y = reaction_time)) +
@@ -108,7 +105,7 @@ combined_hits_df %>%
 
 ## Reaction times per participant centered at the median
 
-```{r, fig.height = 10, fig.width = 10}
+```{r boxplot-reaction-times, fig.height = 10, fig.width = 10}
 combined_hits_df %>%
   drop_na() %>%
   arrange(reaction_time) %>%
@@ -131,9 +128,10 @@ combined_hits_df %>%
   coord_flip()
 ```
 
-## Scale times to [0,1] interval for modeling
+## Scale times to `[0,1]` interval for modeling
 
 ```{r}
+# TODO: migrate to function in `R/`
 scaled_combined_hits_df <- combined_hits_df %>%
   mutate(
     signal_time = signal_time / 3600,
@@ -141,35 +139,46 @@ scaled_combined_hits_df <- combined_hits_df %>%
   )
 ```
 
-## Predict the probability of a hit by signal time
+## Models
+
+### Predict the probability of a hit by signal time
 
 ```{r}
-hit_by_signal_time_model <- function(df) {
-  glmer(
-    is_hit ~ 1 + signal_time + (1 | id),
-    data = df,
-    family = "binomial"
-  )
-}
+model_pHit_signal_time <- hit_by_signal_time_model(scaled_combined_hits_df)
 
-model_pHit_signaltime_MFX <- hit_by_signal_time_model(scaled_combined_hits_df)
-
-summary(model_pHit_signaltime_MFX)
+summary(model_pHit_signal_time)
 ```
 
-### Predict the probability of a hit by signal time with signal time random effects
+### Predict the probability of a hit by signal time with random effects
 
 ```{r}
-#is_hit ~ 1 + signal_time + (1 + signal_time | id)
-```
-
-## Predict `reaction_time` using `signal_time`
-
-```{r}
-model_RT_signaltime_MFX = lmer(
-  reaction_time ~ 1 + signal_time + (1 | id),
-  data = scaled_combined_hits_df %>% na.omit()
+model_pHit_signal_time_rfx <- hit_by_signal_time_model(
+  scaled_combined_hits_df, 
+  random_effects = TRUE
 )
 
-summary(model_RT_signaltime_MFX)
+summary(model_pHit_signal_time_rfx)
+```
+
+### Predict reaction time using signal time
+
+```{r}
+model_RT_signal_time = reaction_time_by_signal_time_model(
+  scaled_combined_hits_df
+)
+
+summary(model_RT_signal_time)
+```
+
+### Predict reaction time using signal time with random effects
+
+### Predict reaction time using signal time
+
+```{r}
+model_RT_signal_time_rfx = reaction_time_by_signal_time_model(
+  scaled_combined_hits_df,
+  random_effects = TRUE
+)
+
+summary(model_RT_signal_time_rfx)
 ```
