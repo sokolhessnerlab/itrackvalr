@@ -20,8 +20,6 @@ Ari Dyckovsky
         time](#predict-reaction-time-using-signal-time)
       - [Predict reaction time using signal time with random
         effects](#predict-reaction-time-using-signal-time-with-random-effects)
-      - [Predict reaction time using signal
-        time](#predict-reaction-time-using-signal-time-1)
 
 ## Read extracted behavioral data
 
@@ -280,8 +278,6 @@ summary(model_RT_signal_time)
     ## signal_time -0.585
 
 ### Predict reaction time using signal time with random effects
-
-### Predict reaction time using signal time
 
 ``` r
 model_RT_signal_time_rfx = reaction_time_by_signal_time_model(

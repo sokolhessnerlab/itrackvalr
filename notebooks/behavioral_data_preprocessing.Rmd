@@ -172,8 +172,6 @@ summary(model_RT_signal_time)
 
 ### Predict reaction time using signal time with random effects
 
-### Predict reaction time using signal time
-
 ```{r}
 model_RT_signal_time_rfx = reaction_time_by_signal_time_model(
   scaled_combined_hits_df,
