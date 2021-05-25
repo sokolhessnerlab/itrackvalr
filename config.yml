@@ -12,12 +12,12 @@ default:
     eyetracker_recordings_csv: "recordings.csv"
     eyetracker_event_csv: "fevent.csv"
     eyetracker_sample_csv: "fsample.csv"
-  participant_id:
-    prefix: "CSN"
-    pad_character: "0"
-    pad_length: 3
-    min: 1
-    max: 57
+  participants:
+    id_prefix: "CSN"
+    id_pad_character: "0"
+    id_pad_length: 3
+    total: 57
+    incomplete: 7
 
 # Ari's Macbook System User
 metis:
