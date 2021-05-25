@@ -42,7 +42,7 @@ Use `tar_read` to get the target object `extracted_behavioral_data_combined` and
 
 ```{r load-data}
 withr::with_dir(here::here(), {
-  combined_df <- tar_read(extracted_behavioral_data_combined)
+  combined_df <- tar_read(combined_behavioral_data)
 })
 ```
 
@@ -66,7 +66,7 @@ Read targets object `all_hits_with_reaction_times` and assign to the combined hi
 
 ```{r read-combined-hits}
 withr::with_dir(here::here(), {
-  combined_hits_df <- tar_read(all_hits_with_reaction_times)
+  combined_hits_df <- tar_read(hits_given_signals)
 })
 ```
 
@@ -132,7 +132,7 @@ combined_hits_df %>%
 
 ```{r read-false-alarms}
 withr::with_dir(here::here(), {
-  false_alarms_df <- tar_read(false_alarms)
+  false_alarms_df <- tar_read(false_alarms_given_responses)
 })
 ```
 
@@ -221,3 +221,20 @@ model_FA_resp_time_rfx = false_alarm_by_response_time_model(
 summary(model_FA_resp_time_rfx)
 ```
 
+```{r}
+scaled_false_alarms_df$pred <- predict(model_FA_resp_time_rfx, type = "response")
+ggplot(scaled_false_alarms_df, aes(x = resp_time)) +
+  geom_line(aes(x = resp_time, y = pred))
+```
+
+```{r}
+scaled_false_alarms_df$pred <- predict(model_FA_resp_time_rfx, type = "response")
+scaled_false_alarms_df
+```
+
+## Playground (in progress)
+
+```{r}
+combined_hits_df %>%
+  mutate(first_half_of_task = as.integer(signal_time < 1800))
+```

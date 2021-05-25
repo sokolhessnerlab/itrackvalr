@@ -34,7 +34,7 @@ tar_option_set(
 # Config
 config <- config::get()
 
-mapped_extraction <- tar_map(
+extract_raw_data <- tar_map(
   unlist = FALSE, # Return a nested list from tar_map()
   # Create a dataframe of participants' meta information using raw behavioral data response file names
   values = tibble(
@@ -67,9 +67,9 @@ mapped_extraction <- tar_map(
   )
 )
 
-combined_behavioral <- tar_combine(
-  extracted_behavioral_data_combined,
-  mapped_extraction$extracted_behavioral_data,
+combine_extracted_behavioral_data <- tar_combine(
+  combined_behavioral_data,
+  extract_raw_data$extracted_behavioral_data,
   command = dplyr::bind_rows(!!!.x) %>%
     dplyr::mutate(
       # Transform step and response types to 0 or 1 integer values to simulate boolean behavior.
@@ -77,6 +77,27 @@ combined_behavioral <- tar_combine(
       is_response = as.integer(resp_type)
     ) %>%
     dplyr::select(-c(resp_type, step_type))
+)
+
+preprocess_behavioral_data <- list (
+  combine_extracted_behavioral_data,
+  tar_target(
+    behavioral_metadata,
+    get_behavioral_metadata(combined_behavioral_data)
+  ),
+  tar_target(
+    hits_given_signals,
+    get_hits_given_signals(combined_behavioral_data)
+  ),
+  tar_target(
+    false_alarms_given_responses,
+    get_false_alarms_given_responses(combined_behavioral_data, hits_given_signals)
+  ),
+  tar_render(
+    behavioral_data_preprocessing_notebook,
+    "notebooks/behavioral_data_preprocessing.Rmd",
+    output_dir = "output"
+  )
 )
 
 summary_reports <- list(
@@ -93,31 +114,7 @@ summary_reports <- list(
 )
 
 list(
-  mapped_extraction,
-  combined_behavioral,
-  tar_target( #TODO: need to migrate to function in 'R/'
-    metadata_behavioral,
-    extracted_behavioral_data_combined %>%
-      dplyr::select(id, p_signal, clock_side, task_begin, task_end) %>%
-      unique()
-  ),
-  tar_target(
-    all_hits_with_reaction_times,
-    get_all_hits_with_reaction_times(extracted_behavioral_data_combined)
-  ),
-  tar_target(
-    false_alarms,
-    extracted_behavioral_data_combined %>%
-      dplyr::filter(is_response == 1) %>%
-      dplyr::left_join(all_hits_with_reaction_times, by = c('trial', 'id', 'image_index')) %>%
-      tidyr::replace_na(list(is_hit = 0)) %>%
-      dplyr::mutate(is_false_alarm = as.integer(!is_hit)) %>%
-      dplyr::select(trial, id, image_index, resp_time, is_false_alarm)
-  ),
-  tar_render(
-    behavioral_data_preprocessing_notebook,
-    "notebooks/behavioral_data_preprocessing.Rmd",
-    output_dir = "output"
-  ),
+  extract_raw_data,
+  preprocess_behavioral_data,
   summary_reports
 )

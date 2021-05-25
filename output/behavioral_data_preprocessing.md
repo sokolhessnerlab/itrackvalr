@@ -26,6 +26,7 @@ Ari Dyckovsky
       - [Predict the probability of a false alarm by response time with
         response time random
         effects](#predict-the-probability-of-a-false-alarm-by-response-time-with-response-time-random-effects)
+  - [Playground (in progress)](#playground-in-progress)
 
 ## Read extracted behavioral data
 
@@ -34,7 +35,7 @@ Use `tar_read` to get the target object
 
 ``` r
 withr::with_dir(here::here(), {
-  combined_df <- tar_read(extracted_behavioral_data_combined)
+  combined_df <- tar_read(combined_behavioral_data)
 })
 ```
 
@@ -70,7 +71,7 @@ combined hits dataframe `combined_hits_df`.
 
 ``` r
 withr::with_dir(here::here(), {
-  combined_hits_df <- tar_read(all_hits_with_reaction_times)
+  combined_hits_df <- tar_read(hits_given_signals)
 })
 ```
 
@@ -80,14 +81,14 @@ Check out a quick preview of the table of hits
 knitr::kable(head(combined_hits_df))
 ```
 
-| trial | id     | image\_index |   signal\_time |     hit\_time | reaction\_time | is\_hit |
-| ----: | :----- | -----------: | -------------: | ------------: | -------------: | ------: |
-|    81 | CSN001 |          801 |  80.0604399294 |            NA |             NA |       0 |
-|   117 | CSN001 |          941 | 116.0665163944 | 116.984091845 | 0.917575450165 |       1 |
-|   119 | CSN001 |         3131 | 118.0679634164 |            NA |             NA |       0 |
-|   211 | CSN001 |         1325 | 210.0571848214 |            NA |             NA |       0 |
-|   235 | CSN001 |          752 | 234.0716901990 |            NA |             NA |       0 |
-|   361 | CSN001 |          103 | 360.0647047530 |            NA |             NA |       0 |
+| trial | id     | image\_index |   signal\_time |     hit\_time | reaction\_time | is\_hit\_given\_signal |
+| ----: | :----- | -----------: | -------------: | ------------: | -------------: | ---------------------: |
+|    81 | CSN001 |          801 |  80.0604399294 |            NA |             NA |                      0 |
+|   117 | CSN001 |          941 | 116.0665163944 | 116.984091845 | 0.917575450165 |                      1 |
+|   119 | CSN001 |         3131 | 118.0679634164 |            NA |             NA |                      0 |
+|   211 | CSN001 |         1325 | 210.0571848214 |            NA |             NA |                      0 |
+|   235 | CSN001 |          752 | 234.0716901990 |            NA |             NA |                      0 |
+|   361 | CSN001 |          103 | 360.0647047530 |            NA |             NA |                      0 |
 
 Check out the reaction time summary statistics by id:
 
@@ -159,7 +160,7 @@ combined_hits_df %>%
 
 ``` r
 withr::with_dir(here::here(), {
-  false_alarms_df <- tar_read(false_alarms)
+  false_alarms_df <- tar_read(false_alarms_given_responses)
 })
 ```
 
@@ -169,14 +170,14 @@ false_alarms_df %>%
   knitr::kable()
 ```
 
-| trial | id     | image\_index |    resp\_time | is\_false\_alarm |
-| ----: | :----- | -----------: | ------------: | ---------------: |
-|   117 | CSN001 |          941 | 116.984091845 |                0 |
-|   357 | CSN001 |         3505 | 356.617249860 |                1 |
-|   426 | CSN001 |         2139 | 425.957022303 |                1 |
-|   523 | CSN001 |         2880 | 522.654992917 |                1 |
-|   739 | CSN001 |         2932 | 738.145843456 |                1 |
-|   823 | CSN001 |          929 | 822.772524834 |                0 |
+| trial | id     | image\_index |    resp\_time | is\_false\_alarm\_given\_response |
+| ----: | :----- | -----------: | ------------: | --------------------------------: |
+|   117 | CSN001 |          941 | 116.984091845 |                                 0 |
+|   357 | CSN001 |         3505 | 356.617249860 |                                 1 |
+|   426 | CSN001 |         2139 | 425.957022303 |                                 1 |
+|   523 | CSN001 |         2880 | 522.654992917 |                                 1 |
+|   739 | CSN001 |         2932 | 738.145843456 |                                 1 |
+|   823 | CSN001 |          929 | 822.772524834 |                                 0 |
 
 ## Models
 
@@ -206,7 +207,7 @@ summary(model_pHit_signal_time)
     ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
     ## ]
     ##  Family: binomial  ( logit )
-    ## Formula: is_hit ~ 1 + signal_time + (1 | id)
+    ## Formula: is_hit_given_signal ~ 1 + signal_time + (1 | id)
     ##    Data: df
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
@@ -246,7 +247,7 @@ summary(model_pHit_signal_time_rfx)
     ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
     ## ]
     ##  Family: binomial  ( logit )
-    ## Formula: is_hit ~ 1 + signal_time + (1 + signal_time | id)
+    ## Formula: is_hit_given_signal ~ 1 + signal_time + (1 + signal_time | id)
     ##    Data: df
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
@@ -363,7 +364,7 @@ summary(model_FA_resp_time)
     ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
     ## ]
     ##  Family: binomial  ( logit )
-    ## Formula: is_false_alarm ~ 1 + resp_time + (1 | id)
+    ## Formula: is_false_alarm_given_response ~ 1 + resp_time + (1 | id)
     ##    Data: df
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
@@ -403,7 +404,7 @@ summary(model_FA_resp_time_rfx)
     ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
     ## ]
     ##  Family: binomial  ( logit )
-    ## Formula: is_false_alarm ~ 1 + resp_time + (1 + resp_time | id)
+    ## Formula: is_false_alarm_given_response ~ 1 + resp_time + (1 + resp_time |      id)
     ##    Data: df
     ## 
     ##      AIC      BIC   logLik deviance df.resid 
@@ -429,3 +430,53 @@ summary(model_FA_resp_time_rfx)
     ## Correlation of Fixed Effects:
     ##           (Intr)
     ## resp_time -0.578
+
+``` r
+scaled_false_alarms_df$pred <- predict(model_FA_resp_time_rfx, type = "response")
+ggplot(scaled_false_alarms_df, aes(x = resp_time)) +
+  geom_line(aes(x = resp_time, y = pred))
+```
+
+![](/Users/metis/Projects/sokolhessnerlab/itrackvalr/output/behavioral_data_preprocessing_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+scaled_false_alarms_df$pred <- predict(model_FA_resp_time_rfx, type = "response")
+scaled_false_alarms_df
+```
+
+    ## # A tibble: 1,865 x 6
+    ##    trial id     image_index resp_time is_false_alarm_given_response  pred
+    ##    <int> <chr>        <dbl>     <dbl>                         <int> <dbl>
+    ##  1   117 CSN001         941    0.0325                             0 0.632
+    ##  2   357 CSN001        3505    0.0991                             1 0.650
+    ##  3   426 CSN001        2139    0.118                              1 0.655
+    ##  4   523 CSN001        2880    0.145                              1 0.662
+    ##  5   739 CSN001        2932    0.205                              1 0.678
+    ##  6   823 CSN001         929    0.229                              0 0.684
+    ##  7   846 CSN001        2799    0.235                              1 0.685
+    ##  8  1029 CSN001         551    0.286                              0 0.698
+    ##  9  1225 CSN001         436    0.340                              1 0.711
+    ## 10  1630 CSN001        2639    0.453                              0 0.738
+    ## # … with 1,855 more rows
+
+## Playground (in progress)
+
+``` r
+combined_hits_df %>%
+  mutate(first_half_of_task = as.integer(signal_time < 1800))
+```
+
+    ## # A tibble: 1,800 x 8
+    ##    trial id     image_index signal_time hit_time reaction_time is_hit_given_signal
+    ##    <int> <chr>        <dbl>       <dbl>    <dbl>         <dbl>               <int>
+    ##  1    81 CSN001         801        80.1      NA         NA                       0
+    ##  2   117 CSN001         941       116.      117.         0.918                   1
+    ##  3   119 CSN001        3131       118.       NA         NA                       0
+    ##  4   211 CSN001        1325       210.       NA         NA                       0
+    ##  5   235 CSN001         752       234.       NA         NA                       0
+    ##  6   361 CSN001         103       360.       NA         NA                       0
+    ##  7   461 CSN001        2804       460.       NA         NA                       0
+    ##  8   591 CSN001          28       590.       NA         NA                       0
+    ##  9   823 CSN001         929       822.      823.         0.710                   1
+    ## 10   845 CSN001         517       844.      846.         1.86                    1
+    ## # … with 1,790 more rows, and 1 more variable: first_half_of_task <int>

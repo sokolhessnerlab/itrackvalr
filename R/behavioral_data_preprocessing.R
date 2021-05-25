@@ -1,3 +1,13 @@
+#' @title Get behavioral metadata for each participant
+#' @description Creates a dataframe composed of each participant's id, signal
+#'   probability, clock side, task begin and end.
+#' @export
+get_behavioral_metadata <- function(behavioral_data) {
+  behavioral_data %>%
+    dplyr::select(id, p_signal, clock_side, task_begin, task_end) %>%
+    unique()
+}
+
 #' @title Get hit times vector from signals and responses per participant
 #' @description This function uses input of both signal times and response times
 #'   from a single participant's extracted behavioral data to determine the hit
@@ -11,12 +21,12 @@ get_hit_times <- function(signal_times, response_times, .interval = 8.0) {
   hit_indices <- c()
 
   signal_times %>%
-    map_dbl(function(signal_time) {
+    purrr::map_dbl(function(signal_time) {
 
       # Find indices for potential hits within the signal interval
       potential_hit_indices <- which(
         response_times %>%
-          map_lgl(~ between(.x, signal_time, signal_time + .interval)),
+          purrr::map_lgl(~ between(.x, signal_time, signal_time + .interval)),
         arr.ind = TRUE
       )
 
@@ -41,43 +51,59 @@ get_hit_times <- function(signal_times, response_times, .interval = 8.0) {
     })
 }
 
-#' @title Get all participants' hits with reaction times
+#' @title Get all participants' hits given signal presence
 #' @description Creates a dataframe composed of each participant's hit times and
 #'   reaction times for those hits, row-by-row with signal times.
 #' @export
-get_all_hits_with_reaction_times <- function(combined_df) {
+get_hits_given_signals <- function(behavioral_data) {
 
-  participants <- combined_df %>%
-    pull(id) %>%
+  participants <- behavioral_data %>%
+    dplyr::pull(id) %>%
     unique()
 
   # Extract only rows where a signal is present
-  all_signals_df <- combined_df %>%
-    filter(is_signal == 1) %>%
-    mutate(
+  only_signals_df <- behavioral_data %>%
+    dplyr::filter(is_signal == 1) %>%
+    dplyr::mutate(
       signal_time = step_time
     ) %>%
-    select(trial, id, image_index, signal_time)
+    dplyr::select(trial, id, image_index, signal_time)
 
   # Extract only rows where a response attempt is present
-  all_responses_df <- combined_df %>%
-    filter(is_response == 1) %>%
-    select(trial, id, image_index, resp_time)
+  only_responses_df <- behavioral_data %>%
+    dplyr::filter(is_response == 1) %>%
+    dplyr::select(trial, id, image_index, resp_time)
 
   # Map over the unlisted participants' ids to get the per-participant
   # signals and responses, then return a combined dataframe of all participant
   # including trial rows for signals, and if it exists, hit time and reaction time
   map_dfr(participants, function(participant) {
-    signals <- all_signals_df %>%
-      filter(id == participant)
+    signals <- only_signals_df %>%
+      dplyr::filter(id == participant)
 
-    responses <- all_responses_df %>%
-      filter(id == participant)
+    responses <- only_responses_df %>%
+      dplyr::filter(id == participant)
 
-    signals %>% mutate(
+    signals %>% dplyr::mutate(
       hit_time = get_hit_times(signals$signal_time, responses$resp_time),
       reaction_time = hit_time - signal_time,
-      is_hit = as.integer(!is.na(hit_time))
+      is_hit_given_signal = as.integer(!is.na(hit_time))
     )
   })
+}
+
+#'
+#'
+#'
+
+#' @title Get false alarms given responses for all participants
+#' @description TODO
+#' @export
+get_false_alarms_given_responses <- function(behavioral_data, hits_with_reaction_times) {
+  behavioral_data %>%
+    dplyr::filter(is_response == 1) %>%
+    dplyr::left_join(hits_with_reaction_times, by = c('trial', 'id', 'image_index')) %>%
+    tidyr::replace_na(list(is_hit_given_signal = 0)) %>%
+    dplyr::mutate(is_false_alarm_given_response = as.integer(!is_hit_given_signal)) %>%
+    dplyr::select(trial, id, image_index, resp_time, is_false_alarm_given_response)
 }
