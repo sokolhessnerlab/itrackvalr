@@ -27,7 +27,9 @@ tar_option_set(
     "R.matlab",
     "stringr",
     "dplyr",
-    "purrr"
+    "purrr",
+    "lme4",
+    "lmerTest"
   )
 )
 
@@ -92,15 +94,67 @@ preprocess_behavioral_data <- list (
   tar_target(
     false_alarms_given_responses,
     get_false_alarms_given_responses(combined_behavioral_data, hits_given_signals)
-  ),
-  tar_render(
-    behavioral_data_preprocessing_notebook,
-    "notebooks/behavioral_data_preprocessing.Rmd",
-    output_dir = "output"
   )
 )
 
-summary_reports <- list(
+analyze_behavioral_data <- list(
+  tar_target(
+    scaled_hits_given_signals,
+    hits_given_signals %>% mutate(signal_time = signal_time / 3600)
+  ),
+  tar_target(
+    scaled_false_alarms_given_responses,
+    false_alarms_given_responses %>% mutate(resp_time = resp_time / 3600)
+  ),
+  tar_target(
+    model_hit_by_signal_time,
+    glmer(
+      is_hit_given_signal ~ 1 + signal_time + (1 | id),
+      data = scaled_hits_given_signals,
+      family = "binomial"
+    )
+  ),
+  tar_target(
+    model_hit_by_signal_time_rfx,
+    glmer(
+      is_hit_given_signal ~ 1 + signal_time + (1 + signal_time | id),
+      data = scaled_hits_given_signals,
+      family = "binomial"
+    )
+  ),
+  tar_target(
+    model_reaction_time_by_signal_time,
+    lmer(
+      reaction_time ~ 1 + signal_time + (1 | id),
+      data = scaled_hits_given_signals %>% na.omit()
+    )
+  ),
+  tar_target(
+    model_reaction_time_by_signal_time_rfx,
+    lmer(
+      reaction_time ~ 1 + signal_time + (1 + signal_time | id),
+      data = scaled_hits_given_signals %>% na.omit()
+    )
+  ),
+  tar_target(
+    model_false_alarm_by_response_time,
+    glmer(
+      is_false_alarm_given_response ~ 1 + resp_time + (1 | id),
+      data = scaled_false_alarms_given_responses,
+      family = "binomial"
+    )
+  ),
+  tar_target(
+    model_false_alarm_by_response_time_rfx,
+    glmer(
+      is_false_alarm_given_response ~ 1 + resp_time + (1 + resp_time | id),
+      data = scaled_false_alarms_given_responses,
+      family = "binomial"
+    )
+  )
+)
+
+report <- list(
   tar_render(
     incompletes,
     "notebooks/incompletes.Rmd",
@@ -110,11 +164,22 @@ summary_reports <- list(
     exclusions,
     "notebooks/exclusions.Rmd",
     output_dir = "output"
+  ),
+  tar_render(
+    behavioral_data_preprocessing_notebook,
+    "notebooks/behavioral_data_preprocessing.Rmd",
+    output_dir = "output"
+  ),
+  tar_render(
+    behavioral_data_analysis_notebook,
+    "notebooks/behavioral_data_analysis.Rmd",
+    output_dir = "output"
   )
 )
 
 list(
   extract_raw_data,
   preprocess_behavioral_data,
-  summary_reports
+  analyze_behavioral_data,
+  report
 )

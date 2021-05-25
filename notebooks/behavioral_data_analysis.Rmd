@@ -1,0 +1,87 @@
+---
+title: "Behavioral Data Analysis"
+author: "Ari Dyckovsky"
+---
+
+```{r, setup, include=FALSE}
+# Knitr options
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  #echo = FALSE,
+  strip.white = TRUE,
+  highlight = TRUE
+)
+
+options(knitr.table.format = "markdown")
+
+# Load packages
+library(targets)
+library(here)
+library(withr)
+library(tidyverse)
+library(broom)
+library(summarytools)
+library(lme4)
+library(lmerTest) # adds useful info to lme4 output
+
+# R options
+options(
+  width = 90
+)
+
+# summarytools options
+st_options(
+  plain.ascii = FALSE
+)
+```
+
+## Read extracted behavioral data
+
+Use `tar_read` to get the target object `combined_behavioral_data` and assign it to `combined_df`.
+
+```{r load-data}
+withr::with_dir(here::here(), {
+  combined_df <- tar_read(combined_behavioral_data)
+})
+```
+
+## Models
+
+We read in and summarize models already evaluated from the `analyze_behavioral_data` target list in `_targets.R`.
+
+### Predict the probability of a hit by signal time
+
+```{r}
+summary(tar_read(model_hit_by_signal_time))
+```
+
+### Predict the probability of a hit by signal time (with random effects on signal time)
+
+```{r}
+summary(tar_read(model_hit_by_signal_time_rfx))
+```
+
+### Predict reaction time using signal time
+
+```{r}
+summary(tar_read(model_reaction_time_by_signal_time))
+```
+
+### Predict reaction time using signal time (with random effects on signal time)
+
+```{r}
+summary(tar_read(model_reaction_time_by_signal_time_rfx))
+```
+
+### Predict the probability of a false alarm by response time
+
+```{r}
+summary(tar_read(model_false_alarm_by_response_time))
+```
+
+### Predict the probability of a false alarm by response time (with random effects on response time)
+
+```{r}
+summary(tar_read(model_false_alarm_by_response_time_rfx))
+```
