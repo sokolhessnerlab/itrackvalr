@@ -11,13 +11,15 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
+
+library(config)
 ```
 
 ## Participants we are excluding from analysis
 
 ### How many participants are excluded from the analysis phase?
 
-A total of **3 participants** of 49 eligible (completed task) are being fully excluded from analysis.
+A total of **3 participants** of `r (config$participants$total - config$participants$incomplete)` eligible (completed task) are being fully excluded from analysis.
 
 ### Which participants are excluded and why?
 

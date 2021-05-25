@@ -13,7 +13,7 @@ Ari Dyckovsky
 
 ### How many participants are excluded from the analysis phase?
 
-A total of **3 participants** of 49 eligible (completed task) are being
+A total of **3 participants** of 50 eligible (completed task) are being
 fully excluded from analysis.
 
 ### Which participants are excluded and why?

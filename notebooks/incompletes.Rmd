@@ -11,13 +11,15 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
+
+library(config)
 ```
 
 ## Participants who did not complete the task
 
 ### How many participants were incomplete?
 
-A total of **7 participants** of 57 recruited did _not complete_ the task.
+A total of **`r config$participants$incomplete` participants** of `r config$participants$total` recruited did _not complete_ the task.
 
 ### What were the reasons participants did not complete the task?
 
