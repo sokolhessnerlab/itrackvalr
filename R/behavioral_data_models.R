@@ -33,3 +33,22 @@ reaction_time_by_signal_time_model <- function(df, random_effects = FALSE) {
     )
   }
 }
+
+#' @title Model participant false alarms by response time
+#' @description TODO
+#' @export
+false_alarm_by_response_time_model <- function(df, random_effects = FALSE) {
+  if (random_effects) {
+    glmer(
+      is_false_alarm ~ 1 + resp_time + (1 + resp_time | id),
+      data = df,
+      family = "binomial"
+    )
+  } else {
+    glmer(
+      is_false_alarm ~ 1 + resp_time + (1 | id),
+      data = df,
+      family = "binomial"
+    )
+  }
+}
