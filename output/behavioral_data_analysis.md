@@ -39,7 +39,9 @@ We read in and summarize models already evaluated from the
 ### Predict the probability of a hit by signal time
 
 ``` r
-summary(tar_read(model_hit_by_signal_time))
+withr::with_dir(here::here(), {
+  summary(tar_read(model_hit_by_signal_time))
+})
 ```
 
     ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
@@ -74,7 +76,9 @@ summary(tar_read(model_hit_by_signal_time))
 ### Predict the probability of a hit by signal time (with random effects on signal time)
 
 ``` r
-summary(tar_read(model_hit_by_signal_time_rfx))
+withr::with_dir(here::here(), {
+  summary(tar_read(model_hit_by_signal_time_rfx))
+})
 ```
 
     ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
@@ -110,7 +114,9 @@ summary(tar_read(model_hit_by_signal_time_rfx))
 ### Predict reaction time using signal time
 
 ``` r
-summary(tar_read(model_reaction_time_by_signal_time))
+withr::with_dir(here::here(), {
+  summary(tar_read(model_reaction_time_by_signal_time))
+})
 ```
 
     ## Linear mixed model fit by REML. t-tests use Satterthwaite's method ['lmerModLmerTest']
@@ -143,7 +149,9 @@ summary(tar_read(model_reaction_time_by_signal_time))
 ### Predict reaction time using signal time (with random effects on signal time)
 
 ``` r
-summary(tar_read(model_reaction_time_by_signal_time_rfx))
+withr::with_dir(here::here(), {
+  summary(tar_read(model_reaction_time_by_signal_time_rfx))
+})
 ```
 
     ## Linear mixed model fit by REML. t-tests use Satterthwaite's method ['lmerModLmerTest']
@@ -177,7 +185,9 @@ summary(tar_read(model_reaction_time_by_signal_time_rfx))
 ### Predict the probability of a false alarm by response time
 
 ``` r
-summary(tar_read(model_false_alarm_by_response_time))
+withr::with_dir(here::here(), {
+  summary(tar_read(model_false_alarm_by_response_time))
+})
 ```
 
     ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
@@ -212,7 +222,9 @@ summary(tar_read(model_false_alarm_by_response_time))
 ### Predict the probability of a false alarm by response time (with random effects on response time)
 
 ``` r
-summary(tar_read(model_false_alarm_by_response_time_rfx))
+withr::with_dir(here::here(), {
+  summary(tar_read(model_false_alarm_by_response_time_rfx))
+})
 ```
 
     ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod

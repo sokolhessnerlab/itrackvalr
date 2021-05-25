@@ -622,7 +622,9 @@ body {
 <h2 id="models">Models</h2>
 <p>We read in and summarize models already evaluated from the <code>analyze_behavioral_data</code> target list in <code>_targets.R</code>.</p>
 <h3 id="predict-the-probability-of-a-hit-by-signal-time">Predict the probability of a hit by signal time</h3>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">summary</span>(<span class="kw">tar_read</span>(model_hit_by_signal_time))</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>withr<span class="op">::</span><span class="kw">with_dir</span>(here<span class="op">::</span><span class="kw">here</span>(), {</span>
+<span id="cb2-2"><a href="#cb2-2"></a>  <span class="kw">summary</span>(<span class="kw">tar_read</span>(model_hit_by_signal_time))</span>
+<span id="cb2-3"><a href="#cb2-3"></a>})</span></code></pre></div>
 <pre><code>## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
 ## ]
 ##  Family: binomial  ( logit )
@@ -653,7 +655,9 @@ body {
 ## signal_time -0.572
 </code></pre>
 <h3 id="predict-the-probability-of-a-hit-by-signal-time-with-random-effects-on-signal-time">Predict the probability of a hit by signal time (with random effects on signal time)</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">summary</span>(<span class="kw">tar_read</span>(model_hit_by_signal_time_rfx))</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>withr<span class="op">::</span><span class="kw">with_dir</span>(here<span class="op">::</span><span class="kw">here</span>(), {</span>
+<span id="cb4-2"><a href="#cb4-2"></a>  <span class="kw">summary</span>(<span class="kw">tar_read</span>(model_hit_by_signal_time_rfx))</span>
+<span id="cb4-3"><a href="#cb4-3"></a>})</span></code></pre></div>
 <pre><code>## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
 ## ]
 ##  Family: binomial  ( logit )
@@ -685,7 +689,9 @@ body {
 ## signal_time -0.401
 </code></pre>
 <h3 id="predict-reaction-time-using-signal-time">Predict reaction time using signal time</h3>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">summary</span>(<span class="kw">tar_read</span>(model_reaction_time_by_signal_time))</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>withr<span class="op">::</span><span class="kw">with_dir</span>(here<span class="op">::</span><span class="kw">here</span>(), {</span>
+<span id="cb6-2"><a href="#cb6-2"></a>  <span class="kw">summary</span>(<span class="kw">tar_read</span>(model_reaction_time_by_signal_time))</span>
+<span id="cb6-3"><a href="#cb6-3"></a>})</span></code></pre></div>
 <pre><code>## Linear mixed model fit by REML. t-tests use Satterthwaite&#39;s method [&#39;lmerModLmerTest&#39;]
 ## Formula: reaction_time ~ 1 + signal_time + (1 | id)
 ##    Data: scaled_hits_given_signals %&gt;% na.omit()
@@ -714,7 +720,9 @@ body {
 ## signal_time -0.585
 </code></pre>
 <h3 id="predict-reaction-time-using-signal-time-with-random-effects-on-signal-time">Predict reaction time using signal time (with random effects on signal time)</h3>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">summary</span>(<span class="kw">tar_read</span>(model_reaction_time_by_signal_time_rfx))</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>withr<span class="op">::</span><span class="kw">with_dir</span>(here<span class="op">::</span><span class="kw">here</span>(), {</span>
+<span id="cb8-2"><a href="#cb8-2"></a>  <span class="kw">summary</span>(<span class="kw">tar_read</span>(model_reaction_time_by_signal_time_rfx))</span>
+<span id="cb8-3"><a href="#cb8-3"></a>})</span></code></pre></div>
 <pre><code>## Linear mixed model fit by REML. t-tests use Satterthwaite&#39;s method [&#39;lmerModLmerTest&#39;]
 ## Formula: reaction_time ~ 1 + signal_time + (1 + signal_time | id)
 ##    Data: scaled_hits_given_signals %&gt;% na.omit()
@@ -744,7 +752,9 @@ body {
 ## signal_time -0.455
 </code></pre>
 <h3 id="predict-the-probability-of-a-false-alarm-by-response-time">Predict the probability of a false alarm by response time</h3>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="kw">summary</span>(<span class="kw">tar_read</span>(model_false_alarm_by_response_time))</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>withr<span class="op">::</span><span class="kw">with_dir</span>(here<span class="op">::</span><span class="kw">here</span>(), {</span>
+<span id="cb10-2"><a href="#cb10-2"></a>  <span class="kw">summary</span>(<span class="kw">tar_read</span>(model_false_alarm_by_response_time))</span>
+<span id="cb10-3"><a href="#cb10-3"></a>})</span></code></pre></div>
 <pre><code>## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
 ## ]
 ##  Family: binomial  ( logit )
@@ -775,7 +785,9 @@ body {
 ## resp_time -0.490
 </code></pre>
 <h3 id="predict-the-probability-of-a-false-alarm-by-response-time-with-random-effects-on-response-time">Predict the probability of a false alarm by response time (with random effects on response time)</h3>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="kw">summary</span>(<span class="kw">tar_read</span>(model_false_alarm_by_response_time_rfx))</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>withr<span class="op">::</span><span class="kw">with_dir</span>(here<span class="op">::</span><span class="kw">here</span>(), {</span>
+<span id="cb12-2"><a href="#cb12-2"></a>  <span class="kw">summary</span>(<span class="kw">tar_read</span>(model_false_alarm_by_response_time_rfx))</span>
+<span id="cb12-3"><a href="#cb12-3"></a>})</span></code></pre></div>
 <pre><code>## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
 ## ]
 ##  Family: binomial  ( logit )
