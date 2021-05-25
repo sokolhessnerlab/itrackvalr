@@ -9,9 +9,10 @@ Ari Dyckovsky
     times](#analyze-all-participants-hits-with-reaction-times)
   - [Reaction times per participant centered at the
     median](#reaction-times-per-participant-centered-at-the-median)
-  - [Scale times to `[0,1]` interval for
-    modeling](#scale-times-to-01-interval-for-modeling)
+  - [Read false alarms target](#read-false-alarms-target)
   - [Models](#models)
+      - [Scale times to `[0,1]` interval for
+        modeling](#scale-times-to-01-interval-for-modeling)
       - [Predict the probability of a hit by signal
         time](#predict-the-probability-of-a-hit-by-signal-time)
       - [Predict the probability of a hit by signal time with random
@@ -20,6 +21,11 @@ Ari Dyckovsky
         time](#predict-reaction-time-using-signal-time)
       - [Predict reaction time using signal time with random
         effects](#predict-reaction-time-using-signal-time-with-random-effects)
+      - [Predict the probability of a false alarm by response
+        time](#predict-the-probability-of-a-false-alarm-by-response-time)
+      - [Predict the probability of a false alarm by response time with
+        response time random
+        effects](#predict-the-probability-of-a-false-alarm-by-response-time-with-response-time-random-effects)
 
 ## Read extracted behavioral data
 
@@ -149,18 +155,45 @@ combined_hits_df %>%
 
 ![](/Users/metis/Projects/sokolhessnerlab/itrackvalr/output/behavioral_data_preprocessing_files/figure-gfm/boxplot-reaction-times-1.png)<!-- -->
 
-## Scale times to `[0,1]` interval for modeling
+## Read false alarms target
 
 ``` r
-# TODO: migrate to function in `R/`
-scaled_combined_hits_df <- combined_hits_df %>%
-  mutate(
-    signal_time = signal_time / 3600,
-    reaction_time = reaction_time
-  )
+withr::with_dir(here::here(), {
+  false_alarms_df <- tar_read(false_alarms)
+})
 ```
 
+``` r
+false_alarms_df %>%
+  head() %>%
+  knitr::kable()
+```
+
+| trial | id     | image\_index |    resp\_time | is\_false\_alarm |
+| ----: | :----- | -----------: | ------------: | ---------------: |
+|   117 | CSN001 |          941 | 116.984091845 |                0 |
+|   357 | CSN001 |         3505 | 356.617249860 |                1 |
+|   426 | CSN001 |         2139 | 425.957022303 |                1 |
+|   523 | CSN001 |         2880 | 522.654992917 |                1 |
+|   739 | CSN001 |         2932 | 738.145843456 |                1 |
+|   823 | CSN001 |          929 | 822.772524834 |                0 |
+
 ## Models
+
+### Scale times to `[0,1]` interval for modeling
+
+``` r
+# TODO: migrate to functions in `R/`
+scaled_combined_hits_df <- combined_hits_df %>%
+  mutate(
+    signal_time = signal_time / 3600
+  )
+
+scaled_false_alarms_df <- false_alarms_df %>%
+  mutate(
+    resp_time = resp_time / 3600
+  )
+```
 
 ### Predict the probability of a hit by signal time
 
@@ -315,3 +348,84 @@ summary(model_RT_signal_time_rfx)
     ## Correlation of Fixed Effects:
     ##             (Intr)
     ## signal_time -0.455
+
+### Predict the probability of a false alarm by response time
+
+``` r
+model_FA_resp_time = false_alarm_by_response_time_model(
+  scaled_false_alarms_df,
+  random_effects = FALSE
+)
+
+summary(model_FA_resp_time)
+```
+
+    ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
+    ## ]
+    ##  Family: binomial  ( logit )
+    ## Formula: is_false_alarm ~ 1 + resp_time + (1 | id)
+    ##    Data: df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##   1521.7   1538.3   -757.9   1515.7     1862 
+    ## 
+    ## Scaled residuals: 
+    ##          Min           1Q       Median           3Q          Max 
+    ## -6.573183916  0.212407553  0.316268283  0.447433551  1.312333996 
+    ## 
+    ## Random effects:
+    ##  Groups Name        Variance    Std.Dev.   
+    ##  id     (Intercept) 0.875903618 0.935897226
+    ## Number of obs: 1865, groups:  id, 50
+    ## 
+    ## Fixed effects:
+    ##                Estimate  Std. Error z value   Pr(>|z|)    
+    ## (Intercept) 1.183808777 0.182616905 6.48247 9.0232e-11 ***
+    ## resp_time   1.403288005 0.245881585 5.70717 1.1487e-08 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##           (Intr)
+    ## resp_time -0.490
+
+### Predict the probability of a false alarm by response time with response time random effects
+
+``` r
+model_FA_resp_time_rfx = false_alarm_by_response_time_model(
+  scaled_false_alarms_df,
+  random_effects = TRUE
+)
+
+summary(model_FA_resp_time_rfx)
+```
+
+    ## Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) [glmerMod
+    ## ]
+    ##  Family: binomial  ( logit )
+    ## Formula: is_false_alarm ~ 1 + resp_time + (1 + resp_time | id)
+    ##    Data: df
+    ## 
+    ##      AIC      BIC   logLik deviance df.resid 
+    ##   1487.1   1514.8   -738.5   1477.1     1860 
+    ## 
+    ## Scaled residuals: 
+    ##          Min           1Q       Median           3Q          Max 
+    ## -7.530117688  0.156638041  0.281783623  0.445188571  1.277232888 
+    ## 
+    ## Random effects:
+    ##  Groups Name        Variance    Std.Dev.    Corr      
+    ##  id     (Intercept) 0.987925834 0.993944583           
+    ##         resp_time   5.541295874 2.353995725 -0.4357819
+    ## Number of obs: 1865, groups:  id, 50
+    ## 
+    ## Fixed effects:
+    ##                Estimate  Std. Error z value   Pr(>|z|)    
+    ## (Intercept) 0.988863741 0.195119106 5.06800 4.0202e-07 ***
+    ## resp_time   2.309811864 0.497993718 4.63823 3.5140e-06 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Correlation of Fixed Effects:
+    ##           (Intr)
+    ## resp_time -0.578

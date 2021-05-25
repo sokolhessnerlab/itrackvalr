@@ -128,18 +128,36 @@ combined_hits_df %>%
   coord_flip()
 ```
 
-## Scale times to `[0,1]` interval for modeling
+## Read false alarms target
 
-```{r}
-# TODO: migrate to function in `R/`
-scaled_combined_hits_df <- combined_hits_df %>%
-  mutate(
-    signal_time = signal_time / 3600,
-    reaction_time = reaction_time
-  )
+```{r read-false-alarms}
+withr::with_dir(here::here(), {
+  false_alarms_df <- tar_read(false_alarms)
+})
+```
+
+```{r preview-false-alarms}
+false_alarms_df %>%
+  head() %>%
+  knitr::kable()
 ```
 
 ## Models
+
+### Scale times to `[0,1]` interval for modeling
+
+```{r}
+# TODO: migrate to functions in `R/`
+scaled_combined_hits_df <- combined_hits_df %>%
+  mutate(
+    signal_time = signal_time / 3600
+  )
+
+scaled_false_alarms_df <- false_alarms_df %>%
+  mutate(
+    resp_time = resp_time / 3600
+  )
+```
 
 ### Predict the probability of a hit by signal time
 
@@ -180,3 +198,26 @@ model_RT_signal_time_rfx = reaction_time_by_signal_time_model(
 
 summary(model_RT_signal_time_rfx)
 ```
+
+### Predict the probability of a false alarm by response time
+
+```{r}
+model_FA_resp_time = false_alarm_by_response_time_model(
+  scaled_false_alarms_df,
+  random_effects = FALSE
+)
+
+summary(model_FA_resp_time)
+```
+
+### Predict the probability of a false alarm by response time with response time random effects
+
+```{r}
+model_FA_resp_time_rfx = false_alarm_by_response_time_model(
+  scaled_false_alarms_df,
+  random_effects = TRUE
+)
+
+summary(model_FA_resp_time_rfx)
+```
+
