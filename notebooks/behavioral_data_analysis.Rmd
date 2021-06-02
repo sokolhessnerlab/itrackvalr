@@ -21,9 +21,12 @@ library(here)
 library(withr)
 library(tidyverse)
 library(broom)
+library(broom.mixed)
 library(summarytools)
 library(lme4)
 library(lmerTest) # adds useful info to lme4 output
+library(sjPlot)
+library(ggeffects)
 
 # R options
 options(
@@ -34,6 +37,9 @@ options(
 st_options(
   plain.ascii = FALSE
 )
+
+# ggplot options
+ggplot2::theme_set(theme_minimal())
 ```
 
 ## Read extracted behavioral data
@@ -54,7 +60,14 @@ We read in and summarize models already evaluated from the `analyze_behavioral_d
 
 ```{r}
 withr::with_dir(here::here(), {
-  summary(tar_read(model_hit_by_signal_time))
+  broom.mixed::tidy(tar_read(model_hit_by_signal_time))
+})
+```
+
+```{r}
+withr::with_dir(here::here(), {
+  ggpredict(tar_read(model_hit_by_signal_time), 'signal_time') %>%
+    plot()
 })
 ```
 
@@ -62,7 +75,14 @@ withr::with_dir(here::here(), {
 
 ```{r}
 withr::with_dir(here::here(), {
-  summary(tar_read(model_hit_by_signal_time_rfx))
+  broom.mixed::tidy(tar_read(model_hit_by_signal_time_rfx))
+})
+```
+
+```{r}
+withr::with_dir(here::here(), {
+  ggpredict(tar_read(model_hit_by_signal_time_rfx), 'signal_time') %>%
+    plot()
 })
 ```
 
@@ -70,7 +90,14 @@ withr::with_dir(here::here(), {
 
 ```{r}
 withr::with_dir(here::here(), {
-  summary(tar_read(model_reaction_time_by_signal_time))
+  broom.mixed::tidy(tar_read(model_reaction_time_by_signal_time))
+})
+```
+
+```{r}
+withr::with_dir(here::here(), {
+  ggpredict(tar_read(model_reaction_time_by_signal_time), 'signal_time') %>%
+    plot()
 })
 ```
 
@@ -78,7 +105,14 @@ withr::with_dir(here::here(), {
 
 ```{r}
 withr::with_dir(here::here(), {
-  summary(tar_read(model_reaction_time_by_signal_time_rfx))
+  broom.mixed::tidy(tar_read(model_reaction_time_by_signal_time_rfx))
+})
+```
+
+```{r}
+withr::with_dir(here::here(), {
+  ggpredict(tar_read(model_reaction_time_by_signal_time_rfx), 'signal_time') %>%
+    plot()
 })
 ```
 
@@ -86,7 +120,14 @@ withr::with_dir(here::here(), {
 
 ```{r}
 withr::with_dir(here::here(), {
-  summary(tar_read(model_false_alarm_by_response_time))
+  broom.mixed::tidy(tar_read(model_false_alarm_by_response_time))
+})
+```
+
+```{r}
+withr::with_dir(here::here(), {
+  ggpredict(tar_read(model_false_alarm_by_response_time), 'resp_time') %>%
+    plot()
 })
 ```
 
@@ -94,6 +135,13 @@ withr::with_dir(here::here(), {
 
 ```{r}
 withr::with_dir(here::here(), {
-  summary(tar_read(model_false_alarm_by_response_time_rfx))
+  broom.mixed::tidy(tar_read(model_false_alarm_by_response_time_rfx))
+})
+```
+
+```{r}
+withr::with_dir(here::here(), {
+  ggpredict(tar_read(model_false_alarm_by_response_time_rfx), 'resp_time') %>%
+    plot()
 })
 ```
