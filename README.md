@@ -85,11 +85,11 @@ Project Link: [https://github.com/sokolhessnerlab/itrackvalr](https://github.com
 [contributors-shield]: https://img.shields.io/github/contributors/sokolhessnerlab/itrackvalr?style=for-the-badge
 [contributors-url]: https://github.com/sokolhessnerlab/itrackvalr/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/sokolhessnerlab/itrackvalr?style=for-the-badge
-[forks-url]: https://github.com/staryourlab/itrackvalr/network/members
+[forks-url]: https://github.com/sokolhessnerlab/itrackvalr/network/members
 [stars-shield]: https://img.shields.io/github/stars/sokolhessnerlab/itrackvalr?style=for-the-badge
-[stars-url]: https://github.com/staryourlab/itrackvalr/stargazers
+[stars-url]: https://github.com/sokolhessnerlab/itrackvalr/stargazers
 [issues-shield]: https://img.shields.io/github/issues/sokolhessnerlab/itrackvalr?style=for-the-badge
-[issues-url]: https://github.com/staryourlab/itrackvalr/issues
+[issues-url]: https://github.com/sokolhessnerlab/itrackvalr/issues
 [license-shield]: https://img.shields.io/github/license/sokolhessnerlab/itrackvalr?style=for-the-badge
 [license-url]: https://github.com/sokolhessnerlab/itrackvalr/blob/main/LICENSE.md
 
