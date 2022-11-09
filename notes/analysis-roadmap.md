@@ -4,10 +4,10 @@
 
 ### Administrative
 
-[ ] Get @du.edu email address back
-[ ] Inform Princeton's IRB about project at DU
+- [ ] Get @du.edu email address back
+- [ ] Inform Princeton's IRB about project at DU
 
 ### Technical
 
-[ ] Upgrade `itrackvalr` package dependencies, especially `targets` and `tidyverse`.
-[ ] Check that analysis pipeline produces the same results with upgraded packages.
+- [ ] Upgrade `itrackvalr` package dependencies, especially `targets` and `tidyverse`.
+- [ ] Check that analysis pipeline produces the same results with upgraded packages.
