@@ -25,17 +25,18 @@
 
 ##### Draw inferences from validation data
 - [ ] Examine relationship between validation errors pre-task and post-task (correlated? sig. diff?).
-- [ ] Calculate and examine size of implied 'zone of uncertainty' in gaze location based on mean errors from validation (extract: radius of zone).
-- [ ] Identify _x_ & _y_ translational offsets to use (pre-task? linear interp between pre- and post-task?).
+- [ ] Calculate and examine size of implied 'zone of uncertainty' in gaze location based on mean errors from validation (extract: **radius of zone**).
+- [ ] Identify _x_ & _y_ translational **offsets** to use (pre-task? linear interp between pre- and post-task?).
 
 ##### Prepare for upsampling and standardizing eye tracking data
 - [ ] Identify temporal resolution for upsampling and standardizing eye tracking data.
 - [ ] Identify location of the clock hand's tip at every moment in time in upsampled/standardized data on a per-participant basis.
 
 ##### Do dimensionality reduction on eye tracking data
+- [ ] Apply translational **offsets** to eye gaze data on a per-participant basis.
 - [ ] Upsample/interpolate/standardize eye gaze data on a per-participant basis.
 - [ ] Calculate distance between eye gaze sample and clock hand's tip.
-- [ ] Use radius of 'zone of uncertainty' to binarize upsampled eyegaze data into _on-task_ (1; distance of gaze loc from clock hand tip is < radius of the zone of uncertainty) and _off-task_ (0; distance is > radius of zone of uncertainty).
+- [ ] Use **radius** of 'zone of uncertainty' to binarize upsampled eyegaze data into _on-task_ (1; two-dimensional distance of gaze loc from clock hand tip is < radius of the zone of uncertainty) and _off-task_ (0; distance is > radius of zone of uncertainty).
 - [ ] Save out binarized data for all further analysis.
 
 ##### Preparation of data on image content
