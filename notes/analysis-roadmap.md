@@ -10,12 +10,12 @@
 
 ### Technical
 
-- [ ] Upgrade `itrackvalr` package dependencies, especially `targets` and `tidyverse` (issue #26).
+- [ ] Upgrade `itrackvalr` package dependencies, especially `targets` and `tidyverse` ([issue #26](https://github.com/sokolhessnerlab/itrackvalr/issues/26)).
 - [ ] Check that analysis pipeline produces the same results with upgraded packages.
 
 ### Analysis: Behavior
 
-- [ ] Run remaining regressions (see issue #25).
+- [ ] Run remaining regressions (see [issue #25](https://github.com/sokolhessnerlab/itrackvalr/issues/25)).
 - [ ] Update documents summarizing behavioral analysis.
 - [ ] Review behavioral analysis to confirm all done.
 
